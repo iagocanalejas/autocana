@@ -1,0 +1,15 @@
+private:
+  account: BANK_ACCOUNT
+  address: Test Address 1234
+  billing_address: Billing Address 1234
+  email: test@mail.com
+  full_name: Full Name
+  phone_number: +34123123123
+  vat: 32342335Z
+
+invoicing:
+  activity_id: Activity
+  contract_number: AINGAS
+  dev_contract: contract
+  rate: 500
+  last_invoice: 1000

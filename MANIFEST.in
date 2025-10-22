@@ -1,0 +1,7 @@
+include README.md
+include LICENSE.md
+
+recursive-include autocana/templates *
+
+prune tests
+global-exclude __pycache__ *.py[cod]

@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autocana"
+version = "0.1.0"
+description = "A Python library for automation (see README.md for details)"
+readme = "README.md"
+license = { file = "LICENSE.md" }
+authors = [{ name = "Iago Santos" }]
+requires-python = ">=3.12"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only"
+]
+dependencies = [
+  "docxtpl",
+  "openpyxl",
+  "pyyaml",
+  "pyutils @ git+https://github.com/iagocanalejas/pyutils.git@master",
+]
+
+[project.scripts]
+autocana = "autocana.main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["autocana*"]
+
+[tool.setuptools.package-data]
+autocana = ["templates/*"]
+
+[tool.pyright]
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+deprecateTypingAliases = true
+exclude = [
+	"**/build",
+	"**/dist",
+	"**/out",
+	"**/venv",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["autocana"]
+omit = [
+	"**/__init__.py",
+	"**/_protocol.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_also = [
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "logger.*",
+    ]
