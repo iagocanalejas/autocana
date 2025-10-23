@@ -5,14 +5,16 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-import yaml
-
-import autocana.constants as C
+from autocana.data.config import load_user_config
+from autocana.data.private import PrivateConfig
+from autocana.reporters.logs import logger
 from pyutils.strings import int_to_european
 
 INVOICE_TEMPLATE_FIELDS = [
     "invoice_date",
     "invoice_number",
+    "contract_number",
+    "dev_contract",
     "account_number",
     "days",
     "period_start",
@@ -28,23 +30,19 @@ INVOICE_TEMPLATE_FIELDS = [
     "billing_address",
 ]
 
+DEFAULT_RATE = 500
+DEFAULT_INVOICE_NUMBER = 1000
+
 
 @dataclass
 class InvoiceConfig:
-    # only from 'config.yaml#private'
-    address: str = ""
-    billing_address: str = ""
-    bank_account: str = ""
-    email: str = ""
-    full_name: str = ""
-    phone_number: str = ""
-    vat: str = ""
+    private: PrivateConfig
 
     # only from 'config.yaml#invoicing'
-    last_invoice: int = 1000
+    last_invoice: int
 
     # from 'config.yaml' but editable using params
-    rate: int = 500
+    rate: int
 
     # only from params
     billed_days: int = 0
@@ -72,23 +70,13 @@ class InvoiceConfig:
 
     @classmethod
     def load(cls) -> "InvoiceConfig":
-        with C.CONFIG_FILE_PATH.open() as config_file:
-            yaml_cfg = yaml.load(config_file, Loader=yaml.SafeLoader)
-            private_cfg = yaml_cfg["private"]
-            invoicing_cfg = yaml_cfg.get("invoicing", {})
-
-            cfg = InvoiceConfig()
-            cfg.bank_account = private_cfg["account"]
-            cfg.address = private_cfg["address"]
-            cfg.billing_address = private_cfg.get("billing_address", private_cfg["address"])
-            cfg.email = private_cfg["email"]
-            cfg.full_name = private_cfg["full_name"]
-            cfg.phone_number = private_cfg["phone_number"]
-            cfg.vat = private_cfg["vat"]
-
-            cfg.rate = invoicing_cfg.get("rate", 500)
-            cfg.last_invoice = invoicing_cfg.get("last_invoice", 1000)
-            return cfg
+        yaml_cfg = load_user_config()
+        invoicing_cfg = yaml_cfg["invoicing"]
+        return cls(
+            private=PrivateConfig.load(yaml_cfg["private"]),
+            last_invoice=invoicing_cfg.get("last_invoice", DEFAULT_INVOICE_NUMBER),
+            rate=invoicing_cfg.get("rate", DEFAULT_RATE),
+        )
 
     def with_params(self, params: argparse.Namespace) -> "InvoiceConfig":
         self.rate = params.rate if params.rate else self.rate
@@ -106,15 +94,17 @@ class InvoiceConfig:
         data: dict[str, str] = {}
 
         data["invoice_number"] = f"{self.last_invoice + 1}"
-        data["account_number"] = f"{' '.join(textwrap.wrap(self.bank_account, 4))}"
-        data["address"] = self.address
-        data["billing_address"] = self.billing_address
-        data["email"] = self.email
-        data["full_name"] = self.full_name
-        data["full_name_upper"] = self.full_name.upper()
-        data["phone_number"] = f"+34{self.phone_number}"
-        data["vat"] = f"{self.vat}"
-        data["eu_vat"] = f"ES{self.vat}"
+        data["account_number"] = f"{' '.join(textwrap.wrap(self.private.bank_account, 4))}"
+        data["contract_number"] = f"{self.private.contract_number}"
+        data["dev_contract"] = f"{self.private.dev_contract}"
+        data["address"] = self.private.address
+        data["billing_address"] = self.private.billing_address
+        data["email"] = self.private.email
+        data["full_name"] = self.private.full_name
+        data["full_name_upper"] = self.private.full_name.upper()
+        data["phone_number"] = f"+34{self.private.phone_number}"
+        data["vat"] = f"{self.private.vat}"
+        data["eu_vat"] = f"ES{self.private.vat}"
         data["days"] = f"{self.billed_days}"
         data["rate"] = f"{int_to_european(self.rate, grouping=True)} EUR"
         data["total"] = f"{int_to_european(self.rate * self.billed_days, grouping=True)} EUR"
@@ -132,4 +122,5 @@ class InvoiceConfig:
                 f"missing fields [{', '.join([f for f in INVOICE_TEMPLATE_FIELDS if f not in data.keys()])}]"
             )
 
+        logger.debug(data)
         return data

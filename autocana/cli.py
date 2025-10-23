@@ -5,25 +5,25 @@ import subprocess
 
 from docxtpl import DocxTemplate
 
+from autocana.data.config import ensure_libreoffice_is_installed, update_last_invoice
 from autocana.data.invoice import InvoiceConfig
 from autocana.reporters.output import write_line
 
-TEMPLATE_PATH = resources.files("autocana.templates") / "invoice.docx"
+INVOICE_TEMPLATE_PATH = resources.files("autocana.templates") / "invoice.docx"
+TSH_TEMPLATE_PATH = resources.files("autocana.templates") / "tsh.xlsx"
 
 
 def cmd_invoice(config: InvoiceConfig) -> int:
-    if not TEMPLATE_PATH.is_file():
-        raise ValueError(f"{TEMPLATE_PATH} does not exist")
+    ensure_libreoffice_is_installed()
+
+    if not INVOICE_TEMPLATE_PATH.is_file():
+        raise ValueError(f"{INVOICE_TEMPLATE_PATH} does not exist")
     os.makedirs("temp", exist_ok=True)
 
-    write_line("Checking for libreoffice...")
-    _check_libreoffice_exists()
-
     try:
-        write_line(f"loading {TEMPLATE_PATH}")
-        template = DocxTemplate(str(TEMPLATE_PATH))
+        write_line(f"loading {INVOICE_TEMPLATE_PATH}")
+        template = DocxTemplate(str(INVOICE_TEMPLATE_PATH))
 
-        # TODO: automatically increase 'last_invoice'
         write_line("rendering new data into de template")
         template.render(config.to_dict())
 
@@ -36,13 +36,7 @@ def cmd_invoice(config: InvoiceConfig) -> int:
         write_line(f"saving new generated pdf in {config.output_path}")
         shutil.move("out.pdf", config.output_path)
     finally:
+        update_last_invoice(config.last_invoice)
         write_line("cleaning temp files")
         shutil.rmtree("temp")
     return 0
-
-
-def _check_libreoffice_exists():
-    if not shutil.which("soffice"):
-        write_line("\tlibreoffice not found.")
-        raise ValueError("No configured libreoffice found")
-    write_line("\tlibreoffice found.")

@@ -1,9 +1,8 @@
 import argparse
-import importlib.resources as resources
-import shutil
 
 import autocana.constants as C
 from autocana import cli as commands
+from autocana.data.config import ensure_user_config_exists
 from autocana.data.invoice import InvoiceConfig
 from autocana.reporters import error_handler, logging_handler, print_logo
 
@@ -24,7 +23,7 @@ def main() -> int:
     args = parser.parse_args()
 
     print_logo()
-    _ensure_user_config_exists()
+    ensure_user_config_exists()
 
     with error_handler(), logging_handler(True):
         if not hasattr(args, "func"):
@@ -46,13 +45,3 @@ def _cmd_invoice(subparsers: argparse._SubParsersAction) -> argparse.ArgumentPar
     parser.add_argument("--output-dir", type=str, help="Output folder for the generated invoice.", default=None)
     parser.set_defaults(func=commands.cmd_invoice)
     return parser
-
-
-def _ensure_user_config_exists():
-    C.CONFIG_PATH.mkdir(parents=True, exist_ok=True)
-    if not C.CONFIG_FILE_PATH.exists():
-        with (resources.files("autocana.templates") / "default-config.yaml").open("rb") as src:
-            with C.CONFIG_FILE_PATH.open("wb") as dst:
-                shutil.copyfileobj(src, dst)
-        print(f"Created default config at {C.CONFIG_FILE_PATH}")
-    return C.CONFIG_FILE_PATH
