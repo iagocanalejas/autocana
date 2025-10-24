@@ -8,7 +8,12 @@ from docxtpl import DocxTemplate
 
 from autocana.data.config import ensure_libreoffice_is_installed, update_last_invoice
 from autocana.data.invoice import InvoiceConfig
-from autocana.data.newproject import FILES_TO_CHANGE, NewProjectConfig, create_virtual_environment_if_available
+from autocana.data.newproject import (
+    NewProjectConfig,
+    change_project_name,
+    change_project_version,
+    create_virtual_environment_if_available,
+)
 from autocana.reporters import write_line
 
 
@@ -27,14 +32,9 @@ def cmd_init_python_project(config: NewProjectConfig) -> int:
     subprocess.run(["git", "init"], cwd=path, check=True)
 
     # rename project
-    for file_name in FILES_TO_CHANGE:
-        write_line(f"renaming {file_name=}")
-        with (path / file_name).open(encoding="utf-8") as file:
-            content = file.read()
-        with (path / file_name).open("w", encoding="utf-8") as file:
-            file.write(content.replace("project", config.project_name.lower()))
+    change_project_name(path, config.project_name.lower())
+    change_project_version(path, min=config.min_py, versions=config.versions)
 
-    # TODO: allow to setup min and max python versions
     shutil.move(path / "project", path / config.project_name)
 
     # create virtualenv if available

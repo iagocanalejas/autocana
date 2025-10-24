@@ -1,5 +1,47 @@
-# Usage
+# Invoicing
+
+Running the command will ensure a configuration file exists in `~/.config/autocana/config.yaml`. If it doesn't it will create it.
+
+Command can be run as follow with all the options.
 
 ```sh
-python scripts/invoice.py 20 -m 10 -o file_name.pdf --output-dir ./invoices
+usage: AutoCana invoice [-h] [-r RATE] [-d DAYS] [-m MONTH] [-o OUTPUT] [--output-dir OUTPUT_DIR]
+
+options:
+  -d, --days DAYS               Number of days to invoice. [20]
+  -m, --month MONTH             Month to invoice (1-12). [current]
+  -r, --rate RATE               Rate applied to the current invoice.
+  -o, --output OUTPUT           Output file name.
+  --output-dir OUTPUT_DIR       Output folder for the generated invoice.
+```
+
+### Example
+
+```sh
+autocana invoice -d 20 -o invoice.pdf --output-dir ~/Downloads
+```
+
+# Init Project
+
+Running the command will clone the template [repository](https://github.com/iagocanalejas/python-template) and make all the required changes to it.
+
+Command can be run as follow with all the options.
+
+```sh
+usage: AutoCana newproject [-h] [--minpy MINPY] [--maxpy MAXPY] [--venv] project_name
+
+positional arguments:
+  project_name   Name of the project.
+
+options:
+  -h, --help     show this help message and exit
+  --minpy MINPY  Minimun version of python for the project. [3.12]
+  --maxpy MAXPY  Maximun version of python for the project.
+  --venv         Creates a new environment for the project.
+```
+
+### Example
+
+```sh
+autocana newproject myproject --minpy 3.13 --maxpy 3.14 --venv
 ```

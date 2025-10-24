@@ -43,6 +43,8 @@ def main() -> int:
 def _cmd_new_project(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("newproject", help="Creates a new python project from the template.")
     parser.add_argument("project_name", type=str, help="Name of the project.")
+    parser.add_argument("--minpy", type=str, help="Minimun version of python for the project.", default="3.12")
+    parser.add_argument("--maxpy", type=str, help="Maximun version of python for the project.", default=None)
     parser.add_argument("--venv", action="store_true", default=False, help="Creates a new environment for the project.")
     parser.set_defaults(func=commands.cmd_init_python_project)
     return parser
@@ -50,9 +52,9 @@ def _cmd_new_project(subparsers: argparse._SubParsersAction) -> argparse.Argumen
 
 def _cmd_invoice(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("invoice", help="Generate a new invoice.")
-    parser.add_argument("-r", "--rate", type=float, help="Rate applied to the current invoice.", default=None)
-    parser.add_argument("-d", "--days", type=int, help="Number of days to invoice.", default=20)
+    parser.add_argument("-d", "--days", type=int, help="Number of days to invoice. [20]", default=20)
     parser.add_argument("-m", "--month", type=int, help="Month to invoice (1-12).", default=None)
+    parser.add_argument("-r", "--rate", type=float, help="Rate applied to the current invoice.", default=None)
     parser.add_argument("-o", "--output", type=str, help="Output file name.", default=None)
     parser.add_argument("--output-dir", type=str, help="Output folder for the generated invoice.", default=None)
     parser.set_defaults(func=commands.cmd_invoice)
