@@ -4,6 +4,7 @@ import autocana.constants as C
 from autocana import cli as commands
 from autocana.data.config import ensure_user_config_exists
 from autocana.data.invoice import InvoiceConfig
+from autocana.data.newproject import NewProjectConfig
 from autocana.reporters import error_handler, logging_handler, print_logo
 
 
@@ -19,6 +20,7 @@ def main() -> int:
     )
 
     subparsers = parser.add_subparsers(dest="command")
+    _cmd_new_project(subparsers)
     _cmd_invoice(subparsers)
     args = parser.parse_args()
 
@@ -30,10 +32,20 @@ def main() -> int:
             parser.print_help()
             return 1
 
-        if args.command == "invoice":
+        if args.command == "newproject":
+            return commands.cmd_init_python_project(NewProjectConfig.from_params(args))
+        elif args.command == "invoice":
             return commands.cmd_invoice(config=InvoiceConfig.load().with_params(args))
         else:
             raise NotImplementedError(f"Command {args.command} not implemented.")
+
+
+def _cmd_new_project(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    parser = subparsers.add_parser("newproject", help="Creates a new python project from the template.")
+    parser.add_argument("project_name", type=str, help="Name of the project.")
+    parser.add_argument("--venv", action="store_true", default=False, help="Creates a new environment for the project.")
+    parser.set_defaults(func=commands.cmd_init_python_project)
+    return parser
 
 
 def _cmd_invoice(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:

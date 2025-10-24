@@ -72,9 +72,3 @@ cover/
 
 out/
 *.csv
-
-# Ignore all .config.yaml files except the template files
-*.config.yaml
-!*.config.template.yaml
-
-*.pdf

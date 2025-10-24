@@ -2,18 +2,50 @@ import importlib.resources as resources
 import os
 import shutil
 import subprocess
+from pathlib import Path
 
 from docxtpl import DocxTemplate
 
 from autocana.data.config import ensure_libreoffice_is_installed, update_last_invoice
 from autocana.data.invoice import InvoiceConfig
-from autocana.reporters.output import write_line
+from autocana.data.newproject import FILES_TO_CHANGE, NewProjectConfig, create_virtual_environment_if_available
+from autocana.reporters import write_line
 
-INVOICE_TEMPLATE_PATH = resources.files("autocana.templates") / "invoice.docx"
-TSH_TEMPLATE_PATH = resources.files("autocana.templates") / "tsh.xlsx"
+
+def cmd_init_python_project(config: NewProjectConfig) -> int:
+    TEMPLATE_REPO_URL = "git@github.com:iagocanalejas/python-template.git"
+
+    if Path(config.project_name).exists():
+        raise ValueError(f"{config.project_name} already exists")
+
+    subprocess.run(["git", "clone", TEMPLATE_REPO_URL, config.project_name], check=True)
+
+    path = Path(config.project_name).absolute()
+
+    # init new git repo
+    shutil.rmtree(path / ".git")
+    subprocess.run(["git", "init"], cwd=path, check=True)
+
+    # rename project
+    for file_name in FILES_TO_CHANGE:
+        write_line(f"renaming {file_name=}")
+        with (path / file_name).open(encoding="utf-8") as file:
+            content = file.read()
+        with (path / file_name).open("w", encoding="utf-8") as file:
+            file.write(content.replace("project", config.project_name.lower()))
+
+    # TODO: allow to setup min and max python versions
+    shutil.move(path / "project", path / config.project_name)
+
+    # create virtualenv if available
+    if config.create_venv:
+        create_virtual_environment_if_available(path)
+
+    return 0
 
 
 def cmd_invoice(config: InvoiceConfig) -> int:
+    INVOICE_TEMPLATE_PATH = resources.files("autocana.templates") / "invoice.docx"
     ensure_libreoffice_is_installed()
 
     if not INVOICE_TEMPLATE_PATH.is_file():
@@ -31,7 +63,7 @@ def cmd_invoice(config: InvoiceConfig) -> int:
         template.save("temp/out.docx")
 
         write_line("converting docx to pdf")
-        subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf", "temp/out.docx"])
+        subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf", "temp/out.docx"], check=True)
 
         write_line(f"saving new generated pdf in {config.output_path}")
         shutil.move("out.pdf", config.output_path)
