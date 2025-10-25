@@ -39,6 +39,9 @@ class InvoiceConfig:
     private: PrivateConfig
 
     # only from 'config.yaml#invoicing'
+    activity_id: str
+    contract_number: str
+    dev_contract: str
     last_invoice: int
 
     # from 'config.yaml' but editable using params
@@ -74,6 +77,9 @@ class InvoiceConfig:
         invoicing_cfg = yaml_cfg["invoicing"]
         return cls(
             private=PrivateConfig.load(yaml_cfg["private"]),
+            activity_id=invoicing_cfg["activity_id"],
+            contract_number=invoicing_cfg["contract_number"],
+            dev_contract=invoicing_cfg["dev_contract"],
             last_invoice=invoicing_cfg.get("last_invoice", DEFAULT_INVOICE_NUMBER),
             rate=invoicing_cfg.get("rate", DEFAULT_RATE),
         )
@@ -95,8 +101,8 @@ class InvoiceConfig:
 
         data["invoice_number"] = f"{self.last_invoice + 1}"
         data["account_number"] = f"{' '.join(textwrap.wrap(self.private.bank_account, 4))}"
-        data["contract_number"] = f"{self.private.contract_number}"
-        data["dev_contract"] = f"{self.private.dev_contract}"
+        data["contract_number"] = f"{self.contract_number}"
+        data["dev_contract"] = f"{self.dev_contract}"
         data["address"] = self.private.address
         data["billing_address"] = self.private.billing_address
         data["email"] = self.private.email
@@ -109,11 +115,11 @@ class InvoiceConfig:
         data["rate"] = f"{int_to_european(self.rate, grouping=True)} EUR"
         data["total"] = f"{int_to_european(self.rate * self.billed_days, grouping=True)} EUR"
 
-        today = datetime.now(timezone.utc)
-        first_day = today.replace(month=self.month, day=1)
+        today = datetime.now(timezone.utc).replace(month=self.month)
+        first_day = today.replace(day=1)
         data["period_start"] = first_day.strftime("%d/%m/%Y")
 
-        last_day = today.replace(month=self.month, day=calendar.monthrange(today.year, today.month)[1])
+        last_day = today.replace(day=calendar.monthrange(today.year, today.month)[1])
         data["invoice_date"] = last_day.strftime("%d/%m/%Y")
         data["period_end"] = last_day.strftime("%d/%m/%Y")
 

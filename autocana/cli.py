@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from docxtpl import DocxTemplate
+from openpyxl import load_workbook
 
 from autocana.data.config import ensure_libreoffice_is_installed, update_last_invoice
 from autocana.data.invoice import InvoiceConfig
@@ -14,6 +15,7 @@ from autocana.data.newproject import (
     change_project_version,
     create_virtual_environment_if_available,
 )
+from autocana.data.tsh import TSHConfig, fill_worked_days, fill_worksheet
 from autocana.reporters import write_line
 
 
@@ -71,4 +73,21 @@ def cmd_invoice(config: InvoiceConfig) -> int:
         update_last_invoice(config.last_invoice)
         write_line("cleaning temp files")
         shutil.rmtree("temp")
+    return 0
+
+
+def cmd_tsh(config: TSHConfig) -> int:
+    TSH_TEMPLATE_PATH = resources.files("autocana.templates") / "tsh.xlsx"
+    wb = load_workbook(str(TSH_TEMPLATE_PATH))
+    ws = wb["template to use"]
+
+    write_line("rendering new data into de template")
+    fill_worksheet(config, ws)
+
+    write_line("filling worked days")
+    fill_worked_days(config, ws)
+
+    write_line(f"saving new generated TSH in {config.output_path}")
+    wb.save(config.output_path)
+
     return 0

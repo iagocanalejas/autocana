@@ -9,8 +9,6 @@ class PrivateConfig:
     address: str
     billing_address: str
     bank_account: str
-    contract_number: str
-    dev_contract: str
     email: str
     full_name: str
     phone_number: str
@@ -23,8 +21,6 @@ class PrivateConfig:
             address=private_cfg["address"],
             billing_address=private_cfg.get("billing_address", private_cfg["address"]),
             bank_account=private_cfg["account"],
-            contract_number=private_cfg["contract_number"],
-            dev_contract=private_cfg["dev_contract"],
             email=private_cfg["email"],
             full_name=private_cfg["full_name"],
             phone_number=private_cfg["phone_number"],

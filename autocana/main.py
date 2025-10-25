@@ -5,6 +5,7 @@ from autocana import cli as commands
 from autocana.data.config import ensure_user_config_exists
 from autocana.data.invoice import InvoiceConfig
 from autocana.data.newproject import NewProjectConfig
+from autocana.data.tsh import TSHConfig
 from autocana.reporters import error_handler, logging_handler, print_logo
 
 
@@ -22,6 +23,7 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command")
     _cmd_new_project(subparsers)
     _cmd_invoice(subparsers)
+    _cmd_tsh(subparsers)
     args = parser.parse_args()
 
     print_logo()
@@ -35,7 +37,9 @@ def main() -> int:
         if args.command == "newproject":
             return commands.cmd_init_python_project(NewProjectConfig.from_params(args))
         elif args.command == "invoice":
-            return commands.cmd_invoice(config=InvoiceConfig.load().with_params(args))
+            return commands.cmd_invoice(InvoiceConfig.load().with_params(args))
+        elif args.command == "tsh":
+            return commands.cmd_tsh(TSHConfig.load().with_params(args))
         else:
             raise NotImplementedError(f"Command {args.command} not implemented.")
 
@@ -58,4 +62,14 @@ def _cmd_invoice(subparsers: argparse._SubParsersAction) -> argparse.ArgumentPar
     parser.add_argument("-o", "--output", type=str, help="Output file name.", default=None)
     parser.add_argument("--output-dir", type=str, help="Output folder for the generated invoice.", default=None)
     parser.set_defaults(func=commands.cmd_invoice)
+    return parser
+
+
+def _cmd_tsh(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    parser = subparsers.add_parser("tsh", help="Generate a new TSH.")
+    parser.add_argument("-m", "--month", type=int, help="Month to TSH (1-12).", default=None)
+    parser.add_argument("-s", "--skip", type=int, nargs="*", help="Days to skip in the TSH.", default=[])
+    parser.add_argument("-o", "--output", type=str, help="Output file name.", default=None)
+    parser.add_argument("--output-dir", type=str, help="Output folder for the generated TSH.", default=None)
+    parser.set_defaults(func=commands.cmd_tsh)
     return parser
