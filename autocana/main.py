@@ -21,7 +21,7 @@ def main() -> int:
     )
 
     subparsers = parser.add_subparsers(dest="command")
-    _cmd_new_project(subparsers)
+    _cmd_new_library(subparsers)
     _cmd_invoice(subparsers)
     _cmd_tsh(subparsers)
     args = parser.parse_args()
@@ -34,8 +34,8 @@ def main() -> int:
             parser.print_help()
             return 1
 
-        if args.command == "newproject":
-            return commands.cmd_init_python_project(NewProjectConfig.from_params(args))
+        if args.command == "newlibrary":
+            return commands.cmd_init_library(NewProjectConfig.from_params(args))
         elif args.command == "invoice":
             return commands.cmd_invoice(InvoiceConfig.load().with_params(args))
         elif args.command == "tsh":
@@ -44,13 +44,13 @@ def main() -> int:
             raise NotImplementedError(f"Command {args.command} not implemented.")
 
 
-def _cmd_new_project(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
-    parser = subparsers.add_parser("newproject", help="Creates a new python project from the template.")
-    parser.add_argument("project_name", type=str, help="Name of the project.")
+def _cmd_new_library(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    parser = subparsers.add_parser("newlibrary", help="Creates a new python library project from the template.")
+    parser.add_argument("project_name", type=str, help="Name of the library.")
     parser.add_argument("--minpy", type=str, help="Minimun version of python for the project.", default="3.12")
     parser.add_argument("--maxpy", type=str, help="Maximun version of python for the project.", default=None)
     parser.add_argument("--venv", action="store_true", default=False, help="Creates a new environment for the project.")
-    parser.set_defaults(func=commands.cmd_init_python_project)
+    parser.set_defaults(func=commands.cmd_init_library)
     return parser
 
 

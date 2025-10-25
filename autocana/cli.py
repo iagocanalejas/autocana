@@ -19,7 +19,7 @@ from autocana.data.tsh import TSHConfig, fill_worked_days, fill_worksheet
 from autocana.reporters import write_line
 
 
-def cmd_init_python_project(config: NewProjectConfig) -> int:
+def cmd_init_library(config: NewProjectConfig) -> int:
     TEMPLATE_REPO_URL = "git@github.com:iagocanalejas/python-template.git"
 
     if Path(config.project_name).exists():

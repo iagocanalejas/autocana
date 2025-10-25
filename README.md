@@ -47,14 +47,14 @@ options:
 autocana tsh -s 10 11 12 --output-dir ~/Downloads
 ```
 
-# Init Project
+# Init Library
 
 Running the command will clone the template [repository](https://github.com/iagocanalejas/python-template) and make all the required changes to it.
 
 Command can be run as follow with all the options.
 
 ```sh
-usage: AutoCana newproject [-h] [--minpy MINPY] [--maxpy MAXPY] [--venv] project_name
+usage: AutoCana newlibrary [-h] [--minpy MINPY] [--maxpy MAXPY] [--venv] project_name
 
 positional arguments:
   project_name   Name of the project.
@@ -68,5 +68,5 @@ options:
 ### Example
 
 ```sh
-autocana newproject myproject --minpy 3.13 --maxpy 3.14 --venv
+autocana newlibrary myproject --minpy 3.13 --maxpy 3.14 --venv
 ```
