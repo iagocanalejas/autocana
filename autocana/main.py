@@ -2,7 +2,7 @@ import argparse
 
 import autocana.constants as C
 from autocana import cli as commands
-from autocana.data.config import ensure_user_config_exists
+from autocana.data.config import SetupConfig, ensure_user_config_exists
 from autocana.data.invoice import InvoiceConfig
 from autocana.data.newproject import NewProjectConfig
 from autocana.data.tsh import TSHConfig
@@ -24,6 +24,7 @@ def main() -> int:
     _cmd_new_library(subparsers)
     _cmd_invoice(subparsers)
     _cmd_tsh(subparsers)
+    _cmd_setup(subparsers)
     args = parser.parse_args()
 
     print_logo()
@@ -40,6 +41,8 @@ def main() -> int:
             return commands.cmd_invoice(InvoiceConfig.load().with_params(args))
         elif args.command == "tsh":
             return commands.cmd_tsh(TSHConfig.load().with_params(args))
+        elif args.command == "setup":
+            return commands.cmd_setup(SetupConfig.from_args(args))
         else:
             raise NotImplementedError(f"Command {args.command} not implemented.")
 
@@ -72,4 +75,11 @@ def _cmd_tsh(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser.add_argument("-o", "--output", type=str, help="Output file name.", default=None)
     parser.add_argument("--output-dir", type=str, help="Output folder for the generated TSH.", default=None)
     parser.set_defaults(func=commands.cmd_tsh)
+    return parser
+
+
+def _cmd_setup(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    parser = subparsers.add_parser("setup", help="Configure AutoCana.")
+    parser.add_argument("-i", "--iterative", action="store_true", help="Iteractive tool setup.", default=False)
+    parser.set_defaults(func=commands.cmd_setup)
     return parser

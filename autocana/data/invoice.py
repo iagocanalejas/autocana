@@ -41,7 +41,8 @@ class InvoiceConfig:
     # only from 'config.yaml#invoicing'
     activity_id: str
     contract_number: str
-    dev_contract: str
+    customer_contract: int
+    extension_number: int
     last_invoice: int
 
     # from 'config.yaml' but editable using params
@@ -79,7 +80,8 @@ class InvoiceConfig:
             private=PrivateConfig.load(yaml_cfg["private"]),
             activity_id=invoicing_cfg["activity_id"],
             contract_number=invoicing_cfg["contract_number"],
-            dev_contract=invoicing_cfg["dev_contract"],
+            customer_contract=invoicing_cfg["customer_contract"],
+            extension_number=invoicing_cfg["extension_number"],
             last_invoice=invoicing_cfg.get("last_invoice", DEFAULT_INVOICE_NUMBER),
             rate=invoicing_cfg.get("rate", DEFAULT_RATE),
         )
@@ -102,7 +104,7 @@ class InvoiceConfig:
         data["invoice_number"] = f"{self.last_invoice + 1}"
         data["account_number"] = f"{' '.join(textwrap.wrap(self.private.bank_account, 4))}"
         data["contract_number"] = f"{self.contract_number}"
-        data["dev_contract"] = f"{self.dev_contract}"
+        data["dev_contract"] = f"FC: {self.customer_contract} - SC {self.extension_number}"
         data["address"] = self.private.address
         data["billing_address"] = self.private.billing_address
         data["email"] = self.private.email

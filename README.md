@@ -10,6 +10,15 @@ pipx runpip autocana install git+https://github.com/iagocanalejas/pyutils.git@ma
 
 Running any command will ensure a configuration file exists in `~/.config/autocana/config.yaml`. If it doesn't it will create it.
 
+You can also run the setup command to create or update the configuration file.
+
+```sh
+usage: AutoCana setup [-h] [-i]
+
+options:
+  -i, --iterative  Iteractive tool setup.
+```
+
 # Invoicing
 
 Running this command will generate an invoice for the specified month using the template in `./autocana/templates/invoice.docx`.

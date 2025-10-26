@@ -1,10 +1,26 @@
+import argparse
 import importlib.resources as resources
+import re
 import shutil
+from dataclasses import dataclass
 
+import inquirer
 import yaml
 
 import autocana.constants as C
 from autocana.reporters import GREEN, NORMAL, write_line
+from pyutils.validators import IBANValidator, is_valid_dni, is_valid_email
+
+
+@dataclass
+class SetupConfig:
+    is_iterative: bool = False
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "SetupConfig":
+        return cls(
+            is_iterative=args.iterative,
+        )
 
 
 def ensure_libreoffice_is_installed():
@@ -15,7 +31,7 @@ def ensure_libreoffice_is_installed():
     write_line("\tlibreoffice found." + NORMAL)
 
 
-_REQUIRED_PRIVATE_FIELDS = ["account", "address", "email", "full_name", "phone_number", "vat"]
+_REQUIRED_PRIVATE_FIELDS = ["address", "bank_account", "email", "full_name", "phone_number", "vat"]
 
 
 def ensure_user_config_exists():
@@ -50,5 +66,48 @@ def update_last_invoice(last_invoice: int):
     write_line(f"updating last generated invoice to {last_invoice + 1}")
     data["invoicing"]["last_invoice"] = last_invoice + 1
 
+    save_user_config(data)
+
+
+def save_user_config(cfg: dict):
     with open(C.CONFIG_FILE_PATH, "w") as file:
-        yaml.safe_dump(data, file)
+        yaml.safe_dump(cfg, file)
+
+
+_QUESTIONS = {
+    "private": [
+        inquirer.Text("address", message="Your address"),
+        inquirer.Text("bank_account", message="Your bank account", validate=lambda _, x: IBANValidator().validate(x)),
+        inquirer.Text("email", message="Your email", validate=lambda _, x: is_valid_email(x)),
+        inquirer.Text("full_name", message="Your full name"),
+        inquirer.Text("phone_number", message="Your phone number", validate=lambda _, x: re.match(r"\+?\d+", x)),
+        inquirer.Text("vat", message="Your VAT number", validate=lambda _, x: is_valid_dni(x)),
+    ],
+    "invoicing": [
+        inquirer.Text("activity_id", message="Your activity ID"),
+        inquirer.Text("contract_number", message="Your contract number"),
+        inquirer.Text(
+            "customer_contract",
+            message="Your development contract number. First part of the FC-SC",
+            validate=lambda _, x: x.isdigit(),
+        ),
+        inquirer.Text(
+            "extension_number",
+            message="Your extension number. Second part of the FC-SC",
+            validate=lambda _, x: x.isdigit(),
+        ),
+        inquirer.Text("rate", message="Your hourly rate", validate=lambda _, x: re.match(r"^\d+(\.\d{1,2})?$", x)),
+        inquirer.Text("last_invoice", message="Last generated invoice number", validate=lambda _, x: x.isdigit()),
+    ],
+}
+
+
+def run_iterative_setup() -> dict:
+    new_config = {}
+
+    write_line("Starting iterative setup...")
+    write_line("Private information:")
+    new_config["private"] = inquirer.prompt(_QUESTIONS["private"])
+    new_config["invoicing"] = inquirer.prompt(_QUESTIONS["invoicing"])
+
+    return new_config

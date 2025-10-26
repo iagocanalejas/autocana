@@ -18,7 +18,8 @@ class TSHConfig:
     # only from 'config.yaml#invoicing'
     activity_id: str
     contract_number: str
-    dev_contract: str
+    customer_contract: int
+    extension_number: int
 
     rest_days: list[int] = field(default_factory=list)
     _month: int | None = None
@@ -54,7 +55,8 @@ class TSHConfig:
             private=PrivateConfig.load(yaml_cfg["private"]),
             activity_id=invoicing_cfg["activity_id"],
             contract_number=invoicing_cfg["contract_number"],
-            dev_contract=invoicing_cfg["dev_contract"],
+            customer_contract=invoicing_cfg["customer_contract"],
+            extension_number=invoicing_cfg["extension_number"],
         )
 
     def with_params(self, params: argparse.Namespace) -> "TSHConfig":
@@ -76,7 +78,7 @@ def fill_worksheet(config: TSHConfig, ws: Worksheet) -> Worksheet:
     ws["A10"] = f"{config.activity_id}"
     ws["B10"] = "Cronos INT"
     ws["C10"] = "1"
-    ws["D10"] = f"TM - {config.dev_contract.split('-')[1]}"
+    ws["D10"] = f"TM - SC: {config.extension_number}"
     ws["E10"] = "BI"
     return ws
 

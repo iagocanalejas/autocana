@@ -7,7 +7,15 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 from openpyxl import load_workbook
 
-from autocana.data.config import ensure_libreoffice_is_installed, update_last_invoice
+import autocana.constants as C
+from autocana.data.config import (
+    SetupConfig,
+    ensure_libreoffice_is_installed,
+    load_user_config,
+    run_iterative_setup,
+    save_user_config,
+    update_last_invoice,
+)
 from autocana.data.invoice import InvoiceConfig
 from autocana.data.newproject import (
     NewProjectConfig,
@@ -93,5 +101,25 @@ def cmd_tsh(config: TSHConfig) -> int:
 
     write_line(f"saving new generated TSH in {config.output_path}")
     wb.save(config.output_path)
+
+    return 0
+
+
+def cmd_setup(config: SetupConfig) -> int:
+    yaml_cfg = load_user_config()
+
+    if not config.is_iterative:
+        raise NotImplementedError("Non-iterative setup is not implemented yet")
+
+    new_config = run_iterative_setup()
+
+    yaml_cfg["private"].update(new_config["private"])
+    yaml_cfg["invoicing"].update(new_config["invoicing"])
+
+    write_line("backing up existing configuration")
+    shutil.copyfile(C.CONFIG_FILE_PATH, C.CONFIG_FILE_PATH.with_suffix(".bak"))
+
+    write_line("saving updated configuration")
+    save_user_config(yaml_cfg)
 
     return 0

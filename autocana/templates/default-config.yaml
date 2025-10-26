@@ -1,6 +1,6 @@
 private:
-  account: BANK_ACCOUNT
   address: Test Address 1234
+  bank_account: BANK_ACCOUNT
   billing_address: Billing Address 1234
   email: test@mail.com
   full_name: Full Name
@@ -10,6 +10,7 @@ private:
 invoicing:
   activity_id: Activity
   contract_number: AINGAS
-  dev_contract: contract
+  customer_contract: 7949
+  extension_number: 20395
   rate: 500
   last_invoice: 1000

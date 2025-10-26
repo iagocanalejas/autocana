@@ -16,6 +16,7 @@ classifiers = [
 ]
 dependencies = [
   "docxtpl",
+  "inquirer",
   "openpyxl",
   "pyyaml",
   "pyutils @ git+https://github.com/iagocanalejas/pyutils.git@master",

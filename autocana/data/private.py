@@ -20,7 +20,7 @@ class PrivateConfig:
         return cls(
             address=private_cfg["address"],
             billing_address=private_cfg.get("billing_address", private_cfg["address"]),
-            bank_account=private_cfg["account"],
+            bank_account=private_cfg["bank_account"],
             email=private_cfg["email"],
             full_name=private_cfg["full_name"],
             phone_number=private_cfg["phone_number"],
