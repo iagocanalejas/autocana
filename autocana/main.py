@@ -81,5 +81,6 @@ def _cmd_tsh(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
 def _cmd_setup(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("setup", help="Configure AutoCana.")
     parser.add_argument("-i", "--iterative", action="store_true", help="Iteractive tool setup.", default=False)
+    parser.add_argument("--last-invoice", type=int, help="Last invoice number used.", default=None)
     parser.set_defaults(func=commands.cmd_setup)
     return parser

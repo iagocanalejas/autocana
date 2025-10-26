@@ -7,7 +7,6 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 from openpyxl import load_workbook
 
-import autocana.constants as C
 from autocana.data.config import (
     SetupConfig,
     ensure_libreoffice_is_installed,
@@ -109,17 +108,17 @@ def cmd_setup(config: SetupConfig) -> int:
     yaml_cfg = load_user_config()
 
     if not config.is_iterative:
-        raise NotImplementedError("Non-iterative setup is not implemented yet")
+        if config.last_invoice is not None:
+            write_line(f"updating last invoice to {config.last_invoice}")
+            yaml_cfg["invoicing"]["last_invoice"] = config.last_invoice
+        save_user_config(yaml_cfg, with_backup=True)
+        return 0
 
     new_config = run_iterative_setup()
 
     yaml_cfg["private"].update(new_config["private"])
     yaml_cfg["invoicing"].update(new_config["invoicing"])
 
-    write_line("backing up existing configuration")
-    shutil.copyfile(C.CONFIG_FILE_PATH, C.CONFIG_FILE_PATH.with_suffix(".bak"))
-
-    write_line("saving updated configuration")
-    save_user_config(yaml_cfg)
+    save_user_config(yaml_cfg, with_backup=True)
 
     return 0

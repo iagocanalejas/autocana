@@ -16,10 +16,13 @@ from pyutils.validators import IBANValidator, is_valid_dni, is_valid_email
 class SetupConfig:
     is_iterative: bool = False
 
+    last_invoice: int | None = None
+
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "SetupConfig":
         return cls(
             is_iterative=args.iterative,
+            last_invoice=args.last_invoice,
         )
 
 
@@ -69,7 +72,12 @@ def update_last_invoice(last_invoice: int):
     save_user_config(data)
 
 
-def save_user_config(cfg: dict):
+def save_user_config(cfg: dict, with_backup: bool = False):
+    if with_backup:
+        write_line("backing up existing configuration")
+        shutil.copyfile(C.CONFIG_FILE_PATH, C.CONFIG_FILE_PATH.with_suffix(".bak"))
+
+    write_line("saving updated configuration")
     with open(C.CONFIG_FILE_PATH, "w") as file:
         yaml.safe_dump(cfg, file)
 

@@ -13,10 +13,11 @@ Running any command will ensure a configuration file exists in `~/.config/autoca
 You can also run the setup command to create or update the configuration file.
 
 ```sh
-usage: AutoCana setup [-h] [-i]
+usage: AutoCana setup [-h] [-i] [--last-invoice LAST_INVOICE]
 
 options:
-  -i, --iterative  Iteractive tool setup.
+  -i, --iterative                 Iteractive tool setup.
+  --last-invoice LAST_INVOICE     Last invoice number used.
 ```
 
 # Invoicing
