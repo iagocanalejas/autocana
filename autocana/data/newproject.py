@@ -7,8 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from autocana.reporters._utils import RED
-from autocana.reporters.output import write_line
+from autocana.reporters import NORMAL, RED, write_line
 
 _FILES_TO_RENAME = [
     "pyproject.toml",
@@ -59,15 +58,15 @@ class NewProjectConfig:
 
 
 def create_virtual_environment_if_available(path: Path) -> None:
-    write_line("creating new virtual environment")
+    write_line("\t- creating new virtual environment")
     if not shutil.which("virtualenv"):
-        return write_line(RED + "no virtualenv found")
+        return write_line(RED + "\t- no virtualenv found" + NORMAL)
     subprocess.run(["virtualenv", "--python", _find_latest_python_binary(), "venv"], cwd=path, check=True)
 
 
 def change_project_name(path: Path, name: str) -> None:
     for file_name in _FILES_TO_RENAME:
-        write_line(f"renaming {file_name=}")
+        write_line(f"\t- renaming {file_name=}")
         with (path / file_name).open(encoding="utf-8") as file:
             content = file.read()
         with (path / file_name).open("w", encoding="utf-8") as file:
@@ -89,7 +88,7 @@ def change_project_version(path: Path, min: str, versions: list[str]) -> None:
         ),
     }
     for file_path, replace_func in replacements.items():
-        write_line(f"changing version inside {file_path=}")
+        write_line(f"\t- changing version inside {file_path=}")
         content = file_path.read_text(encoding="utf-8")
         file_path.write_text(replace_func(content), encoding="utf-8")
 

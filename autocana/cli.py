@@ -67,23 +67,23 @@ def cmd_invoice(config: InvoiceConfig) -> int:
     os.makedirs("temp", exist_ok=True)
 
     try:
-        write_line(f"loading {INVOICE_TEMPLATE_PATH}")
+        write_line(f"\t- loading {INVOICE_TEMPLATE_PATH}")
         template = DocxTemplate(str(INVOICE_TEMPLATE_PATH))
 
-        write_line("rendering new data into de template")
+        write_line("\t- rendering new data into de template")
         template.render(config.to_dict())
 
-        write_line("saving new doc in 'temp/out.docx'")
+        write_line("\t- saving new doc in 'temp/out.docx'")
         template.save("temp/out.docx")
 
-        write_line("converting docx to pdf")
+        write_line("\t- converting docx to pdf")
         subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf", "temp/out.docx"], check=True)
 
-        write_line(f"saving new generated pdf in {config.output_path}")
+        write_line(f"\t- saving new generated pdf in {config.output_path}")
         shutil.move("out.pdf", config.output_path)
     finally:
         update_last_invoice(config.last_invoice)
-        write_line("cleaning temp files")
+        write_line("\t- cleaning temp files")
         shutil.rmtree("temp")
     return 0
 
@@ -93,16 +93,16 @@ def cmd_tsh(config: TSHConfig) -> int:
     wb = load_workbook(str(TSH_TEMPLATE_PATH))
     ws = wb["template to use"]
 
-    write_line("rendering new data into de template")
+    write_line("\t- rendering new data into de template")
     fill_worksheet(config, ws)
 
-    write_line("filling worked days")
+    write_line("\t- filling worked days")
     fill_worked_days(config, ws)
 
-    write_line("signing worksheet")
+    write_line("\t- signing worksheet")
     sign_worksheet_if_configured(ws)
 
-    write_line(f"saving new generated TSH in {config.output_path}")
+    write_line(f"\t- saving new generated TSH in {config.output_path}")
     wb.save(config.output_path)
 
     return 0
@@ -114,13 +114,13 @@ def cmd_setup(config: SetupConfig) -> int:
     if not config.is_iterative:
         has_to_update = False
         if config.last_invoice is not None:
-            write_line(f"updating last invoice to {config.last_invoice}")
+            write_line(f"\t- updating last invoice to {config.last_invoice}")
             yaml_cfg["invoicing"]["last_invoice"] = config.last_invoice
             has_to_update = True
         if config.signature_path is not None:
-            write_line(f"updating signature to: {config.signature_path}")
+            write_line(f"\t- updating signature to: {config.signature_path}")
             if C.SIGNATURE_FILE_PATH.exists():
-                write_line(f"\tremoving old signature file at {C.SIGNATURE_FILE_PATH}")
+                write_line(f"\t- removing old signature file at {C.SIGNATURE_FILE_PATH}")
             shutil.copyfile(config.signature_path, C.SIGNATURE_FILE_PATH)
         if has_to_update:
             save_user_config(yaml_cfg, with_backup=True)

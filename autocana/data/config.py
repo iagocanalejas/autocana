@@ -29,7 +29,7 @@ class SetupConfig:
 
 
 def ensure_libreoffice_is_installed():
-    write_line(GREEN + "Checking for libreoffice...")
+    write_line(GREEN + "\t- Checking for libreoffice...")
     if not shutil.which("soffice"):
         write_line("\tlibreoffice not found." + NORMAL)
         raise ValueError("No configured libreoffice found")
@@ -45,7 +45,7 @@ def ensure_user_config_exists():
         with (resources.files("autocana.templates") / "default-config.yaml").open("rb") as src:
             with C.CONFIG_FILE_PATH.open("wb") as dst:
                 shutil.copyfileobj(src, dst)
-        write_line(GREEN + f"Created default config at {C.CONFIG_FILE_PATH}." + NORMAL)
+        write_line(GREEN + f"\t- Created default config at {C.CONFIG_FILE_PATH}." + NORMAL)
     return C.CONFIG_FILE_PATH
 
 
@@ -68,7 +68,7 @@ def update_last_invoice(last_invoice: int):
     with open(C.CONFIG_FILE_PATH) as cfg_file:
         data = yaml.safe_load(cfg_file)
 
-    write_line(f"updating last generated invoice to {last_invoice + 1}")
+    write_line(f"\t- updating last generated invoice to {last_invoice + 1}")
     data["invoicing"]["last_invoice"] = last_invoice + 1
 
     save_user_config(data)
@@ -76,10 +76,10 @@ def update_last_invoice(last_invoice: int):
 
 def save_user_config(cfg: dict, with_backup: bool = False):
     if with_backup:
-        write_line("backing up existing configuration")
+        write_line("\t- backing up existing configuration")
         shutil.copyfile(C.CONFIG_FILE_PATH, C.CONFIG_FILE_PATH.with_suffix(".bak"))
 
-    write_line("saving updated configuration")
+    write_line("\t- saving updated configuration")
     with open(C.CONFIG_FILE_PATH, "w") as file:
         yaml.safe_dump(cfg, file)
 

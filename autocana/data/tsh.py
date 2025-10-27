@@ -105,7 +105,7 @@ def fill_worked_days(config: TSHConfig, ws: Worksheet) -> Worksheet:
 
 def sign_worksheet_if_configured(ws: Worksheet) -> Worksheet:
     if not C.SIGNATURE_FILE_PATH.is_file():
-        write_line(RED + "\tNo signature file found, skipping adding signature." + NORMAL)
+        write_line(RED + "\tno signature file found, skipping adding signature." + NORMAL)
         return ws
 
     img = Image(str(C.SIGNATURE_FILE_PATH))
