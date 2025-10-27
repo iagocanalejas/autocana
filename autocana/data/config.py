@@ -17,12 +17,14 @@ class SetupConfig:
     is_iterative: bool = False
 
     last_invoice: int | None = None
+    signature_path: str | None = None
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "SetupConfig":
         return cls(
             is_iterative=args.iterative,
             last_invoice=args.last_invoice,
+            signature_path=args.signature,
         )
 
 

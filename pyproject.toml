@@ -18,6 +18,7 @@ dependencies = [
   "docxtpl",
   "inquirer",
   "openpyxl",
+  "Pillow",
   "pyyaml",
   "pyutils @ git+https://github.com/iagocanalejas/pyutils.git@master",
 ]

@@ -82,5 +82,6 @@ def _cmd_setup(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParse
     parser = subparsers.add_parser("setup", help="Configure AutoCana.")
     parser.add_argument("-i", "--iterative", action="store_true", help="Iteractive tool setup.", default=False)
     parser.add_argument("--last-invoice", type=int, help="Last invoice number used.", default=None)
+    parser.add_argument("--signature", type=str, help="Path to the signature image file.", default=None)
     parser.set_defaults(func=commands.cmd_setup)
     return parser

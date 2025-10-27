@@ -7,6 +7,7 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 from openpyxl import load_workbook
 
+import autocana.constants as C
 from autocana.data.config import (
     SetupConfig,
     ensure_libreoffice_is_installed,
@@ -22,7 +23,7 @@ from autocana.data.newproject import (
     change_project_version,
     create_virtual_environment_if_available,
 )
-from autocana.data.tsh import TSHConfig, fill_worked_days, fill_worksheet
+from autocana.data.tsh import TSHConfig, fill_worked_days, fill_worksheet, sign_worksheet_if_configured
 from autocana.reporters import write_line
 
 
@@ -98,6 +99,9 @@ def cmd_tsh(config: TSHConfig) -> int:
     write_line("filling worked days")
     fill_worked_days(config, ws)
 
+    write_line("signing worksheet")
+    sign_worksheet_if_configured(ws)
+
     write_line(f"saving new generated TSH in {config.output_path}")
     wb.save(config.output_path)
 
@@ -108,10 +112,18 @@ def cmd_setup(config: SetupConfig) -> int:
     yaml_cfg = load_user_config()
 
     if not config.is_iterative:
+        has_to_update = False
         if config.last_invoice is not None:
             write_line(f"updating last invoice to {config.last_invoice}")
             yaml_cfg["invoicing"]["last_invoice"] = config.last_invoice
-        save_user_config(yaml_cfg, with_backup=True)
+            has_to_update = True
+        if config.signature_path is not None:
+            write_line(f"updating signature to: {config.signature_path}")
+            if C.SIGNATURE_FILE_PATH.exists():
+                write_line(f"\tremoving old signature file at {C.SIGNATURE_FILE_PATH}")
+            shutil.copyfile(config.signature_path, C.SIGNATURE_FILE_PATH)
+        if has_to_update:
+            save_user_config(yaml_cfg, with_backup=True)
         return 0
 
     new_config = run_iterative_setup()

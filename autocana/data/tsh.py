@@ -4,11 +4,14 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from openpyxl.drawing.image import Image
 from openpyxl.utils import column_index_from_string
 from openpyxl.worksheet.worksheet import Worksheet
 
+import autocana.constants as C
 from autocana.data.config import load_user_config
 from autocana.data.private import PrivateConfig
+from autocana.reporters import NORMAL, RED, write_line
 
 
 @dataclass
@@ -80,6 +83,7 @@ def fill_worksheet(config: TSHConfig, ws: Worksheet) -> Worksheet:
     ws["C10"] = "1"
     ws["D10"] = f"TM - SC: {config.extension_number}"
     ws["E10"] = "BI"
+    ws["R37"] = tsh_date.strftime("%d/%m/%Y")
     return ws
 
 
@@ -96,4 +100,16 @@ def fill_worked_days(config: TSHConfig, ws: Worksheet) -> Worksheet:
         row = 9 if day_number in config.rest_days else 10
         ws.cell(row=row, column=current_col, value=8)
         weekday = (weekday + 1) % 7
+    return ws
+
+
+def sign_worksheet_if_configured(ws: Worksheet) -> Worksheet:
+    if not C.SIGNATURE_FILE_PATH.is_file():
+        write_line(RED + "\tNo signature file found, skipping adding signature." + NORMAL)
+        return ws
+
+    img = Image(str(C.SIGNATURE_FILE_PATH))
+    img.width = 200
+    img.height = 95
+    ws.add_image(img, "W33")
     return ws
