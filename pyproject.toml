@@ -19,8 +19,10 @@ dependencies = [
   "inquirer",
   "openpyxl",
   "Pillow",
-  "pyyaml",
   "pyutils @ git+https://github.com/iagocanalejas/pyutils.git@master",
+  "pyyaml",
+  "requests",
+  "vscripts @ git+https://github.com/iagocanalejas/vscripts.git@master",
 ]
 
 [project.scripts]
@@ -42,28 +44,28 @@ strictDictionaryInference = true
 strictSetInference = true
 deprecateTypingAliases = true
 exclude = [
-	"**/build",
-	"**/dist",
-	"**/out",
-	"**/venv",
+  "**/build",
+  "**/dist",
+  "**/out",
+  "**/venv",
 ]
 
 [tool.coverage.run]
 branch = true
 source = ["autocana"]
 omit = [
-	"**/__init__.py",
-	"**/_protocol.py",
+  "**/__init__.py",
+  "**/_protocol.py",
 ]
 
 [tool.coverage.report]
 show_missing = true
 exclude_also = [
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-    "logger.*",
-    ]
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod",
+  "logger.*",
+]

@@ -4,6 +4,7 @@
 sudo pacman -S python-pipx
 pipx install git+https://github.com/iagocanalejas/autocana.git
 pipx runpip autocana install git+https://github.com/iagocanalejas/pyutils.git@master
+pipx runpip autocana install git+https://github.com/iagocanalejas/vscript.git@master
 ```
 
 # Configuration
@@ -64,6 +65,20 @@ options:
 
 ```sh
 autocana tsh -s 10 11 12 --output-dir ~/Downloads
+```
+
+# Download
+
+Running the command will download videos from a specified URL or from a file containing a list of URLs.
+
+```sh
+usage: AutoCana download [-h] [--output-dir OUTPUT_DIR] url_or_path
+
+positional arguments:
+  url_or_path           Url to download or path containing a list of URLs.
+
+options:
+  --output-dir OUTPUT_DIR     Output folder for the downloaded video.
 ```
 
 # Init Library

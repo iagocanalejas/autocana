@@ -16,6 +16,7 @@ from autocana.data.config import (
     save_user_config,
     update_last_invoice,
 )
+from autocana.data.download import DownloadConfig
 from autocana.data.invoice import InvoiceConfig
 from autocana.data.newproject import (
     NewProjectConfig,
@@ -25,6 +26,7 @@ from autocana.data.newproject import (
 )
 from autocana.data.tsh import TSHConfig, fill_worked_days, fill_worksheet, sign_worksheet_if_configured
 from autocana.reporters import write_line
+from vscripts.downloader import chunk_download_url, download_url
 
 
 def cmd_init_library(config: NewProjectConfig) -> int:
@@ -105,6 +107,18 @@ def cmd_tsh(config: TSHConfig) -> int:
     write_line(f"\t- saving new generated TSH in {config.output_path}")
     wb.save(config.output_path)
 
+    return 0
+
+
+def cmd_download(config: DownloadConfig) -> int:
+    output_dir = config.output_dir if config.output_dir else Path(".") / "downloads"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for url in config.urls:
+        write_line(f"\t- downloading from {url} to {output_dir}\n")
+        if "{}" in url:
+            chunk_download_url(url, str(output_dir))
+        else:
+            download_url(url, str(output_dir))
     return 0
 
 

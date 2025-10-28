@@ -3,6 +3,7 @@ import argparse
 import autocana.constants as C
 from autocana import cli as commands
 from autocana.data.config import SetupConfig, ensure_user_config_exists
+from autocana.data.download import DownloadConfig
 from autocana.data.invoice import InvoiceConfig
 from autocana.data.newproject import NewProjectConfig
 from autocana.data.tsh import TSHConfig
@@ -24,6 +25,7 @@ def main() -> int:
     _cmd_new_library(subparsers)
     _cmd_invoice(subparsers)
     _cmd_tsh(subparsers)
+    _cmd_download(subparsers)
     _cmd_setup(subparsers)
     args = parser.parse_args()
 
@@ -41,6 +43,8 @@ def main() -> int:
             return commands.cmd_invoice(InvoiceConfig.load().with_params(args))
         elif args.command == "tsh":
             return commands.cmd_tsh(TSHConfig.load().with_params(args))
+        elif args.command == "download":
+            return commands.cmd_download(DownloadConfig.from_args(args))
         elif args.command == "setup":
             return commands.cmd_setup(SetupConfig.from_args(args))
         else:
@@ -75,6 +79,14 @@ def _cmd_tsh(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     parser.add_argument("-o", "--output", type=str, help="Output file name.", default=None)
     parser.add_argument("--output-dir", type=str, help="Output folder for the generated TSH.", default=None)
     parser.set_defaults(func=commands.cmd_tsh)
+    return parser
+
+
+def _cmd_download(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+    parser = subparsers.add_parser("download", help="Downloads a video or a list of videos.")
+    parser.add_argument("url_or_path", type=str, help="Url to download or path containing a list of URLs.")
+    parser.add_argument("--output-dir", type=str, help="Output folder for the downloaded video.", default=None)
+    parser.set_defaults(func=commands.cmd_download)
     return parser
 
 

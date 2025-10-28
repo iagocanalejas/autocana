@@ -48,4 +48,4 @@ lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 max-complexity = 10
 
 [lint.isort]
-known-first-party = ["autocana", "pyutils"]
+known-first-party = ["autocana", "pyutils", "vscripts"]
