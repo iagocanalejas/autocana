@@ -3,6 +3,8 @@ import importlib.resources as resources
 import re
 import shutil
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import inquirer
 import yaml
@@ -28,7 +30,7 @@ class SetupConfig:
         )
 
 
-def ensure_libreoffice_is_installed():
+def ensure_libreoffice_is_installed() -> None:
     write_line(GREEN + "\t- Checking for libreoffice...")
     if not shutil.which("soffice"):
         write_line("\tlibreoffice not found." + NORMAL)
@@ -39,7 +41,7 @@ def ensure_libreoffice_is_installed():
 _REQUIRED_PRIVATE_FIELDS = ["address", "bank_account", "email", "full_name", "phone_number", "vat"]
 
 
-def ensure_user_config_exists():
+def ensure_user_config_exists() -> Path:
     C.CONFIG_PATH.mkdir(parents=True, exist_ok=True)
     if not C.CONFIG_FILE_PATH.exists():
         with (resources.files("autocana.templates") / "default-config.yaml").open("rb") as src:
@@ -49,7 +51,7 @@ def ensure_user_config_exists():
     return C.CONFIG_FILE_PATH
 
 
-def load_user_config() -> dict:
+def load_user_config() -> dict[str, Any]:
     with C.CONFIG_FILE_PATH.open() as config_file:
         yaml_cfg = yaml.load(config_file, Loader=yaml.SafeLoader)
 
@@ -64,7 +66,7 @@ def load_user_config() -> dict:
     return yaml_cfg
 
 
-def update_last_invoice(last_invoice: int):
+def update_last_invoice(last_invoice: int) -> None:
     with open(C.CONFIG_FILE_PATH) as cfg_file:
         data = yaml.safe_load(cfg_file)
 
@@ -74,7 +76,7 @@ def update_last_invoice(last_invoice: int):
     save_user_config(data)
 
 
-def save_user_config(cfg: dict, with_backup: bool = False):
+def save_user_config(cfg: dict[str, Any], with_backup: bool = False) -> None:
     if with_backup:
         write_line("\t- backing up existing configuration")
         shutil.copyfile(C.CONFIG_FILE_PATH, C.CONFIG_FILE_PATH.with_suffix(".bak"))
@@ -112,7 +114,7 @@ _QUESTIONS = {
 }
 
 
-def run_iterative_setup() -> dict:
+def run_iterative_setup() -> dict[str, Any]:
     new_config = {}
 
     write_line("Starting iterative setup...")

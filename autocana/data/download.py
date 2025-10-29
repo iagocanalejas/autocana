@@ -30,9 +30,6 @@ class DownloadConfig:
         if args.output_dir and not Path(args.output_dir).is_dir():
             raise ValueError(f"Output directory '{args.output_dir}' does not exist or is not a directory.")
 
-        # remove duplicates while preserving order
-        seen = set()
-        urls = [u for u in urls if not (u in seen or seen.add(u))]
         return cls(
             urls=urls,
             output_dir=Path(args.output_dir) if args.output_dir else None,

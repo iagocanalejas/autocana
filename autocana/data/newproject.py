@@ -93,7 +93,7 @@ def change_project_version(path: Path, min: str, versions: list[str]) -> None:
         file_path.write_text(replace_func(content), encoding="utf-8")
 
 
-def _find_latest_python_binary():
+def _find_latest_python_binary() -> str:
     pattern = re.compile(r"^python3\.(\d+)$")
     versions = []
 

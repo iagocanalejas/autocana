@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from autocana.data.config import load_user_config
 
@@ -15,7 +16,7 @@ class PrivateConfig:
     vat: str
 
     @classmethod
-    def load(cls, cfg_dict: dict | None = None) -> "PrivateConfig":
+    def load(cls, cfg_dict: dict[str, Any] | None = None) -> "PrivateConfig":
         private_cfg = cfg_dict if cfg_dict is not None else load_user_config()["private"]
         return cls(
             address=private_cfg["address"],

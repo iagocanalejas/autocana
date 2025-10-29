@@ -51,7 +51,7 @@ def main() -> int:
             raise NotImplementedError(f"Command {args.command} not implemented.")
 
 
-def _cmd_new_library(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def _cmd_new_library(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("newlibrary", help="Creates a new python library project from the template.")
     parser.add_argument("project_name", type=str, help="Name of the library.")
     parser.add_argument("--minpy", type=str, help="Minimun version of python for the project.", default="3.12")
@@ -61,7 +61,7 @@ def _cmd_new_library(subparsers: argparse._SubParsersAction) -> argparse.Argumen
     return parser
 
 
-def _cmd_invoice(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def _cmd_invoice(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("invoice", help="Generate a new invoice.")
     parser.add_argument("-d", "--days", type=int, help="Number of days to invoice. [20]", default=20)
     parser.add_argument("-m", "--month", type=int, help="Month to invoice (1-12).", default=None)
@@ -72,7 +72,7 @@ def _cmd_invoice(subparsers: argparse._SubParsersAction) -> argparse.ArgumentPar
     return parser
 
 
-def _cmd_tsh(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def _cmd_tsh(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("tsh", help="Generate a new TSH.")
     parser.add_argument("-m", "--month", type=int, help="Month to TSH (1-12).", default=None)
     parser.add_argument("-s", "--skip", type=int, nargs="*", help="Days to skip in the TSH.", default=[])
@@ -82,7 +82,7 @@ def _cmd_tsh(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
     return parser
 
 
-def _cmd_download(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def _cmd_download(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("download", help="Downloads a video or a list of videos.")
     parser.add_argument("url_or_path", type=str, help="Url to download or path containing a list of URLs.")
     parser.add_argument("--output-dir", type=str, help="Output folder for the downloaded video.", default=None)
@@ -90,7 +90,7 @@ def _cmd_download(subparsers: argparse._SubParsersAction) -> argparse.ArgumentPa
     return parser
 
 
-def _cmd_setup(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
+def _cmd_setup(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> argparse.ArgumentParser:
     parser = subparsers.add_parser("setup", help="Configure AutoCana.")
     parser.add_argument("-i", "--iterative", action="store_true", help="Iteractive tool setup.", default=False)
     parser.add_argument("--last-invoice", type=int, help="Last invoice number used.", default=None)
