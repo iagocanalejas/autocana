@@ -24,9 +24,12 @@ from autocana.data.newproject import (
     change_project_version,
     create_virtual_environment_if_available,
 )
+from autocana.data.reencode import ReencodeConfig
 from autocana.data.tsh import TSHConfig, fill_worked_days, fill_worksheet, sign_worksheet_if_configured
 from autocana.reporters import write_line
+from vscripts import reencode
 from vscripts.downloader import chunk_download_url, download_url
+from vscripts.matcher import NameMatcher
 
 
 def cmd_init_library(config: NewProjectConfig) -> int:
@@ -119,6 +122,21 @@ def cmd_download(config: DownloadConfig) -> int:
             chunk_download_url(url, str(output_dir))
         else:
             download_url(url, str(output_dir))
+    return 0
+
+
+def cmd_reencode(config: ReencodeConfig) -> int:
+    output_dir = config.output_dir if config.output_dir else Path(".") / "reencoded"
+    for i, file in enumerate(config.files):
+        cleaned_file_name = NameMatcher(file.stem + file.suffix).clean()
+        write_line(f"\t{i + 1}/{len(config.files)} reencoding {file.stem + file.suffix} -> {cleaned_file_name}")
+
+        if file.absolute() == (output_dir / cleaned_file_name).absolute():
+            write_line("\t- skipping, source and destination are the same")
+            continue
+
+        reencode(file.absolute(), (output_dir / cleaned_file_name).absolute(), config.quality)
+
     return 0
 
 

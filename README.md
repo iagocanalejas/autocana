@@ -4,7 +4,7 @@
 sudo pacman -S python-pipx
 pipx install git+https://github.com/iagocanalejas/autocana.git
 pipx runpip autocana install git+https://github.com/iagocanalejas/pyutils.git@master
-pipx runpip autocana install git+https://github.com/iagocanalejas/vscript.git@master
+pipx runpip autocana install git+https://github.com/iagocanalejas/vscripts.git@master
 ```
 
 # Configuration
@@ -79,6 +79,22 @@ positional arguments:
 
 options:
   --output-dir OUTPUT_DIR     Output folder for the downloaded video.
+```
+
+# Reencode
+
+Re-encode a multimedia file using HandBrakeCLI and save the result as a new file.
+
+```sh
+usage: AutoCana reencode [-h] [-q QUALITY] [-r] [--output-dir OUTPUT_DIR] dir_or_path
+
+positional arguments:
+  dir_or_path           Path to a video file or a directory containing video files to re-encode.
+
+options:
+  -q, --quality QUALITY         Target quality for the reencode
+  -r, --recursive               If the directory should be recursively explored.
+  --output-dir OUTPUT_DIR       Output folder for the downloaded video.
 ```
 
 # Init Library
