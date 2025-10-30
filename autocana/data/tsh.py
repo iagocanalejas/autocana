@@ -1,5 +1,6 @@
 import argparse
 import calendar
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,7 +12,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 import autocana.constants as C
 from autocana.data.config import load_user_config
 from autocana.data.private import PrivateConfig
-from autocana.reporters import NORMAL, RED, write_line
+
+logger = logging.getLogger("autocana")
 
 
 @dataclass
@@ -105,7 +107,7 @@ def fill_worked_days(config: TSHConfig, ws: Worksheet) -> Worksheet:
 
 def sign_worksheet_if_configured(ws: Worksheet) -> Worksheet:
     if not C.SIGNATURE_FILE_PATH.is_file():
-        write_line(RED + "\tno signature file found, skipping adding signature." + NORMAL)
+        logger.error("no signature file found, skipping adding signature.")
         return ws
 
     img = Image(str(C.SIGNATURE_FILE_PATH))

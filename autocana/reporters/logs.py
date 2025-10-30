@@ -2,14 +2,14 @@ import contextlib
 import logging
 from collections.abc import Generator
 
-from ._utils import RED, YELLOW, format_color
+from ._utils import GREEN, RED, YELLOW, format_color
 from .output import write_line
 
 logger = logging.getLogger("autocana")
 
 LOG_LEVEL_COLORS = {
     "DEBUG": "",
-    "INFO": "",
+    "INFO": GREEN,
     "WARNING": YELLOW,
     "ERROR": RED,
 }

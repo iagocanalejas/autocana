@@ -8,6 +8,7 @@ from autocana.data.invoice import InvoiceConfig
 from autocana.data.newproject import NewProjectConfig
 from autocana.data.reencode import ReencodeConfig
 from autocana.data.tsh import TSHConfig
+from autocana.data.video import VideoConfig
 from autocana.reporters import error_handler, logging_handler, print_logo
 from vscripts import ENCODING_1080P
 
@@ -30,12 +31,13 @@ def main() -> int:
         return parser
 
     help_msg = "Creates a new python library project from 'https://github.com/iagocanalejas/python-template'."
+    _cmd_setup(_add_cmd("setup", help="Configure AutoCana."))
     _cmd_new_library(_add_cmd("newlibrary", help=help_msg))
     _cmd_invoice(_add_cmd("invoice", help="Generate a new ARHS invoice."))
     _cmd_tsh(_add_cmd("tsh", help="Generate a new ARHS timesheet."))
+    _cmd_vedit(_add_cmd("vedit", help="Processes videos."))
     _cmd_download(_add_cmd("download", help="Downloads videos."))
     _cmd_reencode(_add_cmd("reencode", help="Re-encodes videos."))
-    _cmd_setup(_add_cmd("setup", help="Configure AutoCana."))
     args = parser.parse_args()
 
     print_logo()
@@ -52,6 +54,8 @@ def main() -> int:
             return commands.cmd_invoice(InvoiceConfig.load().with_params(args))
         elif args.command == "tsh":
             return commands.cmd_tsh(TSHConfig.load().with_params(args))
+        elif args.command == "vedit":
+            return commands.cmd_vedit(VideoConfig.from_args(args))
         elif args.command == "download":
             return commands.cmd_download(DownloadConfig.from_args(args))
         elif args.command == "reencode":
@@ -60,6 +64,14 @@ def main() -> int:
             return commands.cmd_setup(SetupConfig.from_args(args))
         else:
             raise NotImplementedError(f"Command {args.command} not implemented.")
+
+
+def _cmd_setup(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    parser.add_argument("-i", "--iterative", action="store_true", help="Iteractive tool setup.", default=False)
+    parser.add_argument("--last-invoice", type=int, help="Last invoice number used.", default=None)
+    parser.add_argument("--signature", type=str, help="Path to the signature image file.", default=None)
+    parser.set_defaults(func=commands.cmd_setup)
+    return parser
 
 
 def _cmd_new_library(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -90,6 +102,14 @@ def _cmd_tsh(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     return parser
 
 
+def _cmd_vedit(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    parser.add_argument("file_path", type=str, help="Path to the file to edit.")
+    parser.add_argument("actions", type=str, nargs="*", help="list of actions to be ran")
+    parser.add_argument("--output-dir", type=str, help="Output folder for the edited video.", default=None)
+    parser.set_defaults(func=commands.cmd_vedit)
+    return parser
+
+
 def _cmd_download(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("url_or_path", type=str, help="Url to download or path containing a list of URLs.")
     parser.add_argument("--output-dir", type=str, help="Output folder for the downloaded video.", default=None)
@@ -113,12 +133,4 @@ def _cmd_reencode(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     )
     parser.add_argument("--output-dir", type=str, help="Output folder for the downloaded video.", default=None)
     parser.set_defaults(func=commands.cmd_reencode)
-    return parser
-
-
-def _cmd_setup(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    parser.add_argument("-i", "--iterative", action="store_true", help="Iteractive tool setup.", default=False)
-    parser.add_argument("--last-invoice", type=int, help="Last invoice number used.", default=None)
-    parser.add_argument("--signature", type=str, help="Path to the signature image file.", default=None)
-    parser.set_defaults(func=commands.cmd_setup)
     return parser

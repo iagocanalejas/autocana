@@ -1,7 +1,9 @@
 import importlib.resources as resources
+import logging
 import os
 import shutil
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 
 from docxtpl import DocxTemplate
@@ -26,10 +28,12 @@ from autocana.data.newproject import (
 )
 from autocana.data.reencode import ReencodeConfig
 from autocana.data.tsh import TSHConfig, fill_worked_days, fill_worksheet, sign_worksheet_if_configured
-from autocana.reporters import write_line
-from vscripts import reencode
+from autocana.data.video import VideoConfig
+from vscripts import COMMAND_APPEND, COMMANDS, reencode
 from vscripts.downloader import chunk_download_url, download_url
 from vscripts.matcher import NameMatcher
+
+logger = logging.getLogger("autocana")
 
 
 def cmd_init_library(config: NewProjectConfig) -> int:
@@ -72,23 +76,28 @@ def cmd_invoice(config: InvoiceConfig) -> int:
     os.makedirs("temp", exist_ok=True)
 
     try:
-        write_line(f"\t- loading {INVOICE_TEMPLATE_PATH}")
+        logger.info(f"loading {INVOICE_TEMPLATE_PATH}")
         template = DocxTemplate(str(INVOICE_TEMPLATE_PATH))
 
-        write_line("\t- rendering new data into de template")
+        logger.info("rendering new data into de template")
         template.render(config.to_dict())
 
-        write_line("\t- saving new doc in 'temp/out.docx'")
+        logger.info("saving new doc in 'temp/out.docx'")
         template.save("temp/out.docx")
 
-        write_line("\t- converting docx to pdf")
-        subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf", "temp/out.docx"], check=True)
+        logger.info("converting docx to pdf")
+        subprocess.run(
+            ["libreoffice", "--headless", "--convert-to", "pdf", "temp/out.docx"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
-        write_line(f"\t- saving new generated pdf in {config.output_path}")
+        logger.info(f"saving new generated pdf in {config.output_path}")
         shutil.move("out.pdf", config.output_path)
     finally:
         update_last_invoice(config.last_invoice)
-        write_line("\t- cleaning temp files")
+        logger.info("cleaning temp files")
         shutil.rmtree("temp")
     return 0
 
@@ -98,26 +107,55 @@ def cmd_tsh(config: TSHConfig) -> int:
     wb = load_workbook(str(TSH_TEMPLATE_PATH))
     ws = wb["template to use"]
 
-    write_line("\t- rendering new data into de template")
+    logger.info("rendering new data into de template")
     fill_worksheet(config, ws)
 
-    write_line("\t- filling worked days")
+    logger.info("filling worked days")
     fill_worked_days(config, ws)
 
-    write_line("\t- signing worksheet")
+    logger.info("signing worksheet")
     sign_worksheet_if_configured(ws)
 
-    write_line(f"\t- saving new generated TSH in {config.output_path}")
+    logger.info(f"saving new generated TSH in {config.output_path}")
     wb.save(config.output_path)
 
     return 0
 
 
+def cmd_vedit(config: VideoConfig) -> int:
+    processing_path = config.path
+    intermediate_files: list[Path] = []
+    for action, args in config.actions.items():
+        fn: Callable[..., Path] = COMMANDS[action]
+        intermediate_files.append(processing_path)
+
+        logger.info(f"applying action '{action}' with args '{args}' on file '{processing_path.name}'")
+        if action == COMMAND_APPEND and args is None:
+            # append a file at the end of a command queue
+            processing_path = fn(processing_path, into=config.path)
+        elif args is not None:
+            processing_path = fn(processing_path, args)
+        else:
+            processing_path = fn(processing_path)
+
+    output_dir = config.output_dir if config.output_dir else config.path.parent
+    if output_dir.exists() and output_dir != processing_path.parent:
+        logger.info("moving final processed file to output directory")
+        shutil.move(processing_path, config.output_dir if config.output_dir else config.path.parent)
+
+    for f in intermediate_files:
+        if f != config.path:
+            logger.info(f"removing intermediate file {f}")
+            f.unlink()
+
+    return 0
+
+
 def cmd_download(config: DownloadConfig) -> int:
-    output_dir = config.output_dir if config.output_dir else Path(".") / "downloads"
+    output_dir = config.output_dir if config.output_dir else Path.cwd() / "downloads"
     output_dir.mkdir(parents=True, exist_ok=True)
     for url in config.urls:
-        write_line(f"\t- downloading from {url} to {output_dir}\n")
+        logger.info(f"downloading from {url} to {output_dir}\n")
         if "{}" in url:
             chunk_download_url(url, str(output_dir))
         else:
@@ -126,13 +164,13 @@ def cmd_download(config: DownloadConfig) -> int:
 
 
 def cmd_reencode(config: ReencodeConfig) -> int:
-    output_dir = config.output_dir if config.output_dir else Path(".") / "reencoded"
+    output_dir = config.output_dir if config.output_dir else Path.cwd() / "reencoded"
     for i, file in enumerate(config.files):
         cleaned_file_name = NameMatcher(file.stem + file.suffix).clean()
-        write_line(f"\t{i + 1}/{len(config.files)} reencoding {file.stem + file.suffix} -> {cleaned_file_name}")
+        logger.info(f"\t{i + 1}/{len(config.files)} reencoding {file.stem + file.suffix} -> {cleaned_file_name}")
 
         if file.absolute() == (output_dir / cleaned_file_name).absolute():
-            write_line("\t- skipping, source and destination are the same")
+            logger.info("skipping, source and destination are the same")
             continue
 
         reencode(file.absolute(), (output_dir / cleaned_file_name).absolute(), config.quality)
@@ -146,13 +184,13 @@ def cmd_setup(config: SetupConfig) -> int:
     if not config.is_iterative:
         has_to_update = False
         if config.last_invoice is not None:
-            write_line(f"\t- updating last invoice to {config.last_invoice}")
+            logger.info(f"updating last invoice to {config.last_invoice}")
             yaml_cfg["invoicing"]["last_invoice"] = config.last_invoice
             has_to_update = True
         if config.signature_path is not None:
-            write_line(f"\t- updating signature to: {config.signature_path}")
+            logger.info(f"updating signature to: {config.signature_path}")
             if C.SIGNATURE_FILE_PATH.exists():
-                write_line(f"\t- removing old signature file at {C.SIGNATURE_FILE_PATH}")
+                logger.info(f"removing old signature file at {C.SIGNATURE_FILE_PATH}")
             shutil.copyfile(config.signature_path, C.SIGNATURE_FILE_PATH)
         if has_to_update:
             save_user_config(yaml_cfg, with_backup=True)

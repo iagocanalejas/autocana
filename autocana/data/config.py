@@ -1,5 +1,6 @@
 import argparse
 import importlib.resources as resources
+import logging
 import re
 import shutil
 from dataclasses import dataclass
@@ -10,8 +11,9 @@ import inquirer
 import yaml
 
 import autocana.constants as C
-from autocana.reporters import GREEN, NORMAL, write_line
 from pyutils.validators import IBANValidator, is_valid_dni, is_valid_email
+
+logger = logging.getLogger("autocana")
 
 
 @dataclass
@@ -31,11 +33,11 @@ class SetupConfig:
 
 
 def ensure_libreoffice_is_installed() -> None:
-    write_line(GREEN + "\t- Checking for libreoffice...")
+    logger.info("Checking for libreoffice...")
     if not shutil.which("soffice"):
-        write_line("\tlibreoffice not found." + NORMAL)
+        logger.info("libreoffice not found.")
         raise ValueError("No configured libreoffice found")
-    write_line("\tlibreoffice found." + NORMAL)
+    logger.info("libreoffice found.")
 
 
 _REQUIRED_PRIVATE_FIELDS = ["address", "bank_account", "email", "full_name", "phone_number", "vat"]
@@ -47,7 +49,7 @@ def ensure_user_config_exists() -> Path:
         with (resources.files("autocana.templates") / "default-config.yaml").open("rb") as src:
             with C.CONFIG_FILE_PATH.open("wb") as dst:
                 shutil.copyfileobj(src, dst)
-        write_line(GREEN + f"\t- Created default config at {C.CONFIG_FILE_PATH}." + NORMAL)
+        logger.info(f"Created default config at {C.CONFIG_FILE_PATH}.")
     return C.CONFIG_FILE_PATH
 
 
@@ -70,7 +72,7 @@ def update_last_invoice(last_invoice: int) -> None:
     with open(C.CONFIG_FILE_PATH) as cfg_file:
         data = yaml.safe_load(cfg_file)
 
-    write_line(f"\t- updating last generated invoice to {last_invoice + 1}")
+    logger.info(f"updating last generated invoice to {last_invoice + 1}")
     data["invoicing"]["last_invoice"] = last_invoice + 1
 
     save_user_config(data)
@@ -78,10 +80,10 @@ def update_last_invoice(last_invoice: int) -> None:
 
 def save_user_config(cfg: dict[str, Any], with_backup: bool = False) -> None:
     if with_backup:
-        write_line("\t- backing up existing configuration")
+        logger.info("backing up existing configuration")
         shutil.copyfile(C.CONFIG_FILE_PATH, C.CONFIG_FILE_PATH.with_suffix(".bak"))
 
-    write_line("\t- saving updated configuration")
+    logger.info("saving updated configuration")
     with open(C.CONFIG_FILE_PATH, "w") as file:
         yaml.safe_dump(cfg, file)
 
@@ -117,8 +119,8 @@ _QUESTIONS = {
 def run_iterative_setup() -> dict[str, Any]:
     new_config = {}
 
-    write_line("Starting iterative setup...")
-    write_line("Private information:")
+    logger.info("Starting iterative setup...")
+    logger.info("Private information:")
     new_config["private"] = inquirer.prompt(_QUESTIONS["private"])
     new_config["invoicing"] = inquirer.prompt(_QUESTIONS["invoicing"])
 

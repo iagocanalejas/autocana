@@ -24,7 +24,7 @@ def error_handler() -> Generator[None]:
         if isinstance(e, FatalError):
             msg, ret_code = "An error has occurred", 1
         elif isinstance(e, KeyboardInterrupt):
-            msg, ret_code = "Interrupted (^C)", 130
+            return
         else:
             msg, ret_code = "An unexpected error has occurred", 3
         _log_and_exit(msg, ret_code, e, traceback.format_exc())
