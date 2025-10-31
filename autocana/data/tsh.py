@@ -44,7 +44,7 @@ class TSHConfig:
 
         name_parts = self.private.full_name.split()
         name = f"{name_parts[1][:6]}{name_parts[0][:2]}".lower()
-        return f"{name}_{month.strftime('%Y%m%d').lower()}.xlsx"
+        return f"TSH_{name}_{month.strftime('%Y%m%d').lower()}.xlsx"
 
     @property
     def output_path(self) -> str:
