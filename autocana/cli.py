@@ -99,6 +99,11 @@ def cmd_invoice(config: InvoiceConfig) -> int:
         update_last_invoice(config.last_invoice)
         logger.info("cleaning temp files")
         shutil.rmtree("temp")
+
+    logger.info(f"Invoice generation completed successfully ({config.output_path})")
+    logger.info("your invoice should be submitted to:")
+    logger.info("\t- signedtimesheet@arhs-developments.com")
+
     return 0
 
 
@@ -118,6 +123,19 @@ def cmd_tsh(config: TSHConfig) -> int:
 
     logger.info(f"saving new generated TSH in {config.output_path}")
     wb.save(config.output_path)
+
+    logger.info("converting xlsx to pdf")
+    subprocess.run(
+        ["libreoffice", "--headless", "--convert-to", "pdf", config.output_path],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    logger.info(f"TSH generation completed successfully ({config.output_path})")
+    logger.info("your timesheet should be submitted to:")
+    logger.info("\t- timesheet@arhs-developments.com (XSLX version)")
+    logger.info("\t- signedtimesheet@arhs-developments.com (PDF version)")
 
     return 0
 
