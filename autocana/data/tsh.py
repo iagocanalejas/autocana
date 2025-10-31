@@ -26,19 +26,14 @@ class TSHConfig:
     customer_contract: int
     extension_number: int
 
+    # only from params
+    month: int
+    output_name: str = field(init=False)
     rest_days: list[int] = field(default_factory=list)
-    _month: int | None = None
-    _output_file: str | None = None
+
     _output_dir: Path | None = None
 
-    @property
-    def month(self) -> int:
-        return self._month if self._month is not None else datetime.now(timezone.utc).month
-
-    @property
-    def file_name(self) -> str:
-        if self._output_file:
-            return self._output_file
+    def _default_name(self) -> str:
         today = datetime.now(timezone.utc).replace(month=self.month)
         month = today.replace(day=calendar.monthrange(today.year, today.month)[1])
 
@@ -49,8 +44,8 @@ class TSHConfig:
     @property
     def output_path(self) -> str:
         if self._output_dir:
-            return f"{self._output_dir}/{self.file_name}"
-        return self.file_name
+            return str(self._output_dir / self.output_name)
+        return self.output_name
 
     @classmethod
     def load(cls) -> "TSHConfig":
@@ -62,12 +57,13 @@ class TSHConfig:
             contract_number=invoicing_cfg["contract_number"],
             customer_contract=invoicing_cfg["customer_contract"],
             extension_number=invoicing_cfg["extension_number"],
+            month=datetime.now(timezone.utc).month,
         )
 
     def with_params(self, params: argparse.Namespace) -> "TSHConfig":
         self.rest_days = params.skip
-        self._month = params.month
-        self._output_file = params.output
+        self.month = params.month if params.month is not None else self.month
+        self.output_name = params.output if params.output else self._default_name()
         if params.output_dir:
             dir = Path(params.output_dir)
             if not dir.exists() and dir.is_dir():
@@ -85,6 +81,7 @@ def fill_worksheet(config: TSHConfig, ws: Worksheet) -> Worksheet:
     ws["C10"] = "1"
     ws["D10"] = f"TM - SC: {config.extension_number}"
     ws["E10"] = "BI"
+    ws["M4"] = config.private.full_name
     ws["R37"] = tsh_date.strftime("%d/%m/%Y")
     return ws
 

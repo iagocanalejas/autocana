@@ -1,7 +1,7 @@
 import argparse
 import calendar
 import textwrap
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -49,28 +49,20 @@ class InvoiceConfig:
     rate: int
 
     # only from params
+    month: int
     billed_days: int = 0
+    output_name: str = field(init=False)
 
-    _month: int | None = None
-    _output_file: str | None = None
     _output_dir: Path | None = None
 
-    @property
-    def month(self) -> int:
-        return self._month if self._month is not None else datetime.now(timezone.utc).month
-
-    @property
-    def file_name(self) -> str:
-        if self._output_file:
-            return self._output_file
-        month = datetime.now(timezone.utc).replace(month=self.month)
-        return f"{month.strftime('%B').lower()}_invoice.pdf"
+    def _default_name(self) -> str:
+        return f"{datetime.now(timezone.utc).replace(month=self.month).strftime('%B').lower()}_invoice.pdf"
 
     @property
     def output_path(self) -> str:
         if self._output_dir:
-            return f"{self._output_dir}/{self.file_name}"
-        return self.file_name
+            return str(self._output_dir / self.output_name)
+        return self.output_name
 
     @classmethod
     def load(cls) -> "InvoiceConfig":
@@ -84,13 +76,14 @@ class InvoiceConfig:
             extension_number=invoicing_cfg["extension_number"],
             last_invoice=invoicing_cfg.get("last_invoice", DEFAULT_INVOICE_NUMBER),
             rate=invoicing_cfg.get("rate", DEFAULT_RATE),
+            month=datetime.now(timezone.utc).month,
         )
 
     def with_params(self, params: argparse.Namespace) -> "InvoiceConfig":
         self.rate = params.rate if params.rate else self.rate
         self.billed_days = params.days
-        self._month = params.month
-        self._output_file = params.output
+        self.month = params.month if params.month is not None else self.month
+        self.output_name = params.output if params.output else self._default_name()
         if params.output_dir:
             dir = Path(params.output_dir)
             if not dir.exists() and dir.is_dir():
