@@ -68,7 +68,7 @@ def load_user_config() -> dict[str, Any]:
     return yaml_cfg
 
 
-def update_last_invoice(last_invoice: int) -> None:
+def increment_last_invoice(last_invoice: int) -> None:
     with open(C.CONFIG_FILE_PATH) as cfg_file:
         data = yaml.safe_load(cfg_file)
 
