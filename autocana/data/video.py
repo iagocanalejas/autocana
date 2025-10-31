@@ -9,9 +9,17 @@ from vscripts import COMMAND_ATEMPO, COMMANDS, NTSC_RATE
 
 @dataclass
 class VideoConfig:
-    path: Path
+    input_path: Path
     actions: OrderedDict[str, Any]
-    output_dir: Path | None
+    output_dir: Path
+
+    _output_name: str | None
+
+    @property
+    def output_path(self) -> str:
+        if self._output_name:
+            return str(self.output_dir / self._output_name)
+        return str(self.output_dir)
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "VideoConfig":
@@ -19,13 +27,12 @@ class VideoConfig:
         path = Path(maybe_path)
         if not path.is_file():
             raise ValueError(f"'{maybe_path}' is not a valid file path.")
-        if args.output_dir and not Path(args.output_dir).is_dir():
-            raise ValueError(f"Output directory '{args.output_dir}' does not exist or is not a directory.")
 
         return cls(
-            path=path,
+            input_path=path,
             actions=cls._parse_actions(args.actions),
-            output_dir=Path(args.output_dir) if args.output_dir else None,
+            output_dir=Path(args.output_dir) if args.output_dir else path.parent,
+            _output_name=args.output,
         )
 
     @staticmethod

@@ -87,8 +87,7 @@ def _cmd_invoice(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("-d", "--days", type=int, help="Number of days to invoice. [20]", default=20)
     parser.add_argument("-m", "--month", type=int, help="Month to invoice (1-12).", default=None)
     parser.add_argument("-r", "--rate", type=float, help="Rate applied to the current invoice.", default=None)
-    parser.add_argument("-o", "--output", type=str, help="Output file name.", default=None)
-    parser.add_argument("--output-dir", type=str, help="Output folder for the generated invoice.", default=None)
+    _set_output_args(parser)
     parser.set_defaults(func=commands.cmd_invoice)
     return parser
 
@@ -96,8 +95,7 @@ def _cmd_invoice(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 def _cmd_tsh(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("-m", "--month", type=int, help="Month to TSH (1-12).", default=None)
     parser.add_argument("-s", "--skip", type=int, nargs="*", help="Days to skip in the TSH.", default=[])
-    parser.add_argument("-o", "--output", type=str, help="Output file name.", default=None)
-    parser.add_argument("--output-dir", type=str, help="Output folder for the generated TSH.", default=None)
+    _set_output_args(parser)
     parser.set_defaults(func=commands.cmd_tsh)
     return parser
 
@@ -105,14 +103,14 @@ def _cmd_tsh(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 def _cmd_vedit(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("file_path", type=str, help="Path to the file to edit.")
     parser.add_argument("actions", type=str, nargs="*", help="list of actions to be ran")
-    parser.add_argument("--output-dir", type=str, help="Output folder for the edited video.", default=None)
+    _set_output_args(parser)
     parser.set_defaults(func=commands.cmd_vedit)
     return parser
 
 
 def _cmd_download(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("url_or_path", type=str, help="Url to download or path containing a list of URLs.")
-    parser.add_argument("--output-dir", type=str, help="Output folder for the downloaded video.", default=None)
+    _set_output_args(parser)
     parser.set_defaults(func=commands.cmd_download)
     return parser
 
@@ -131,6 +129,12 @@ def _cmd_reencode(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="If the directory should be recursively explored.",
         default=False,
     )
-    parser.add_argument("--output-dir", type=str, help="Output folder for the downloaded video.", default=None)
+    _set_output_args(parser)
     parser.set_defaults(func=commands.cmd_reencode)
+    return parser
+
+
+def _set_output_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    parser.add_argument("-o", "--output", type=str, help="Output file name.", default=None)
+    parser.add_argument("--output-dir", type=str, help="Output folder for the generated file.", default=None)
     return parser

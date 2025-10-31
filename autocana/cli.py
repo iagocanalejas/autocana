@@ -13,10 +13,10 @@ import autocana.constants as C
 from autocana.data.config import (
     SetupConfig,
     ensure_libreoffice_is_installed,
+    increment_last_invoice,
     load_user_config,
     run_iterative_setup,
     save_user_config,
-    update_last_invoice,
 )
 from autocana.data.download import DownloadConfig
 from autocana.data.invoice import InvoiceConfig
@@ -43,11 +43,13 @@ def cmd_init_library(config: NewProjectConfig) -> int:
         raise ValueError(f"{config.project_name} already exists")
 
     try:
+        logger.info(f"cloning template repo from {TEMPLATE_REPO_URL}")
         subprocess.run(["git", "clone", TEMPLATE_REPO_URL, config.project_name], check=True)
 
         path = Path(config.project_name).absolute()
 
         # init new git repo
+        logger.info("initializing new git repository")
         shutil.rmtree(path / ".git")
         subprocess.run(["git", "init"], cwd=path, check=True)
 
@@ -68,11 +70,13 @@ def cmd_init_library(config: NewProjectConfig) -> int:
 
 
 def cmd_invoice(config: InvoiceConfig) -> int:
-    INVOICE_TEMPLATE_PATH = resources.files("autocana.templates") / "invoice.docx"
     ensure_libreoffice_is_installed()
 
+    INVOICE_TEMPLATE_PATH = resources.files("autocana.templates") / "invoice.docx"
     if not INVOICE_TEMPLATE_PATH.is_file():
         raise ValueError(f"{INVOICE_TEMPLATE_PATH} does not exist")
+
+    logger.info("creating temporary working directory 'temp'")
     os.makedirs("temp", exist_ok=True)
 
     try:
@@ -95,8 +99,10 @@ def cmd_invoice(config: InvoiceConfig) -> int:
 
         logger.info(f"saving new generated pdf in {config.output_path}")
         shutil.move("out.pdf", config.output_path)
+
+        logger.info("updating last invoice number in user configuration")
+        increment_last_invoice(last_invoice=config.last_invoice)
     finally:
-        update_last_invoice(config.last_invoice)
         logger.info("cleaning temp files")
         shutil.rmtree("temp")
 
@@ -108,7 +114,13 @@ def cmd_invoice(config: InvoiceConfig) -> int:
 
 
 def cmd_tsh(config: TSHConfig) -> int:
+    ensure_libreoffice_is_installed()
+
     TSH_TEMPLATE_PATH = resources.files("autocana.templates") / "tsh.xlsx"
+    if not TSH_TEMPLATE_PATH.is_file():
+        raise ValueError(f"{TSH_TEMPLATE_PATH} does not exist")
+
+    logger.info(f"loading {TSH_TEMPLATE_PATH}")
     wb = load_workbook(str(TSH_TEMPLATE_PATH))
     ws = wb["template to use"]
 
@@ -141,58 +153,64 @@ def cmd_tsh(config: TSHConfig) -> int:
 
 
 def cmd_vedit(config: VideoConfig) -> int:
-    processing_path = config.path
+    if not config.output_dir.exists():
+        logger.info(f"creating output directory at {config.output_dir}")
+        config.output_dir.mkdir(parents=True, exist_ok=True)
+
+    processing_path = config.input_path
     intermediate_files: list[Path] = []
-    for action, args in config.actions.items():
-        fn: Callable[..., Path] = COMMANDS[action]
-        intermediate_files.append(processing_path)
+    try:
+        for action, args in config.actions.items():
+            fn: Callable[..., Path] = COMMANDS[action]
+            intermediate_files.append(processing_path)
 
-        logger.info(f"applying action '{action}' with args '{args}' on file '{processing_path.name}'")
-        if action == COMMAND_APPEND and args is None:
-            # append a file at the end of a command queue
-            processing_path = fn(processing_path, into=config.path)
-        elif args is not None:
-            processing_path = fn(processing_path, args)
-        else:
-            processing_path = fn(processing_path)
+            logger.info(f"applying action '{action}' with args '{args}' on file '{processing_path.name}'")
+            if action == COMMAND_APPEND and args is None:
+                # append a file at the end of a command queue
+                processing_path = fn(processing_path, into=config.input_path)
+            elif args is not None:
+                processing_path = fn(processing_path, args)
+            else:
+                processing_path = fn(processing_path)
 
-    output_dir = config.output_dir if config.output_dir else config.path.parent
-    if output_dir.exists() and output_dir != processing_path.parent:
-        logger.info("moving final processed file to output directory")
-        shutil.move(processing_path, config.output_dir if config.output_dir else config.path.parent)
-
-    for f in intermediate_files:
-        if f != config.path:
-            logger.info(f"removing intermediate file {f}")
-            f.unlink()
+        if config.output_path != processing_path.parent:
+            logger.info(f"moving final processed file to {config.output_path}")
+            shutil.move(processing_path, config.output_path)
+    finally:
+        logger.info(f"cleaning intermediate files: {intermediate_files}")
+        [f.unlink() for f in intermediate_files if f != config.input_path]
 
     return 0
 
 
 def cmd_download(config: DownloadConfig) -> int:
-    output_dir = config.output_dir if config.output_dir else Path.cwd() / "downloads"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    if not config.output_dir.exists():
+        logger.info(f"creating output directory at {config.output_dir}")
+        config.output_dir.mkdir(parents=True, exist_ok=True)
+
     for url in config.urls:
-        logger.info(f"downloading from {url} to {output_dir}\n")
+        logger.info(f"downloading from {url} to {config.output_path}\n")
         if "{}" in url:
-            chunk_download_url(url, str(output_dir))
+            chunk_download_url(url, str(config.output_path))
         else:
-            download_url(url, str(output_dir))
+            download_url(url, str(config.output_path))
     return 0
 
 
 def cmd_reencode(config: ReencodeConfig) -> int:
-    output_dir = config.output_dir if config.output_dir else Path.cwd() / "reencoded"
-    for i, file in enumerate(config.files):
-        cleaned_file_name = NameMatcher(file.stem + file.suffix).clean()
-        logger.info(f"\t{i + 1}/{len(config.files)} reencoding {file.stem + file.suffix} -> {cleaned_file_name}")
+    if not config.output_dir.exists():
+        logger.info(f"creating output directory at {config.output_dir}")
+        config.output_dir.mkdir(parents=True, exist_ok=True)
 
-        if file.absolute() == (output_dir / cleaned_file_name).absolute():
-            logger.info("skipping, source and destination are the same")
+    for i, file in enumerate(config.files):
+        output_name = config.output_name if config.output_name else NameMatcher(file.stem + file.suffix).clean()
+        logger.info(f"\t{i + 1}/{len(config.files)} reencoding {file.stem + file.suffix} -> {output_name}")
+
+        if file.absolute() == (config.output_dir / output_name).absolute():
+            logger.warning("skipping, source and destination are the same")
             continue
 
-        reencode(file.absolute(), (output_dir / cleaned_file_name).absolute(), config.quality)
-
+        reencode(file.absolute(), (config.output_dir / output_name).absolute(), config.quality)
     return 0
 
 
