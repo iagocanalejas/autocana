@@ -3,7 +3,6 @@ import logging
 import os
 import shutil
 import subprocess
-from collections.abc import Callable
 from pathlib import Path
 
 from docxtpl import DocxTemplate
@@ -26,12 +25,8 @@ from autocana.data.newproject import (
     change_project_version,
     create_virtual_environment_if_available,
 )
-from autocana.data.reencode import ReencodeConfig
 from autocana.data.tsh import TSHConfig, fill_worked_days, fill_worksheet, sign_worksheet_if_configured
-from autocana.data.video import VideoConfig
-from vscripts import COMMAND_APPEND, COMMANDS, reencode
 from vscripts.downloader import chunk_download_url, download_url
-from vscripts.matcher import NameMatcher
 
 logger = logging.getLogger("autocana")
 
@@ -138,7 +133,7 @@ def cmd_tsh(config: TSHConfig) -> int:
 
     logger.info("converting xlsx to pdf")
     subprocess.run(
-        ["libreoffice", "--headless", "--convert-to", "pdf", config.output_path],
+        ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", config.output_path],
         check=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -148,37 +143,6 @@ def cmd_tsh(config: TSHConfig) -> int:
     logger.info("your timesheet should be submitted to:")
     logger.info("\t- timesheet@arhs-developments.com (XSLX version)")
     logger.info("\t- signedtimesheet@arhs-developments.com (PDF version)")
-
-    return 0
-
-
-def cmd_vedit(config: VideoConfig) -> int:
-    if not config.output_dir.exists():
-        logger.info(f"creating output directory at {config.output_dir}")
-        config.output_dir.mkdir(parents=True, exist_ok=True)
-
-    processing_path = config.input_path
-    intermediate_files: list[Path] = []
-    try:
-        for action, args in config.actions.items():
-            fn: Callable[..., Path] = COMMANDS[action]
-            intermediate_files.append(processing_path)
-
-            logger.info(f"applying action '{action}' with args '{args}' on file '{processing_path.name}'")
-            if action == COMMAND_APPEND and args is None:
-                # append a file at the end of a command queue
-                processing_path = fn(processing_path, into=config.input_path)
-            elif args is not None:
-                processing_path = fn(processing_path, args)
-            else:
-                processing_path = fn(processing_path)
-
-        if config.output_path != processing_path.parent:
-            logger.info(f"moving final processed file to {config.output_path}")
-            shutil.move(processing_path, config.output_path)
-    finally:
-        logger.info(f"cleaning intermediate files: {intermediate_files}")
-        [f.unlink() for f in intermediate_files if f != config.input_path]
 
     return 0
 
@@ -194,23 +158,6 @@ def cmd_download(config: DownloadConfig) -> int:
             chunk_download_url(url, str(config.output_path))
         else:
             download_url(url, str(config.output_path))
-    return 0
-
-
-def cmd_reencode(config: ReencodeConfig) -> int:
-    if not config.output_dir.exists():
-        logger.info(f"creating output directory at {config.output_dir}")
-        config.output_dir.mkdir(parents=True, exist_ok=True)
-
-    for i, file in enumerate(config.files):
-        output_name = config.output_name if config.output_name else NameMatcher(file.stem + file.suffix).clean()
-        logger.info(f"\t{i + 1}/{len(config.files)} reencoding {file.stem + file.suffix} -> {output_name}")
-
-        if file.absolute() == (config.output_dir / output_name).absolute():
-            logger.warning("skipping, source and destination are the same")
-            continue
-
-        reencode(file.absolute(), (config.output_dir / output_name).absolute(), config.quality)
     return 0
 
 

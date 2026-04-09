@@ -6,11 +6,8 @@ from autocana.data.config import SetupConfig, ensure_user_config_exists
 from autocana.data.download import DownloadConfig
 from autocana.data.invoice import InvoiceConfig
 from autocana.data.newproject import NewProjectConfig
-from autocana.data.reencode import ReencodeConfig
 from autocana.data.tsh import TSHConfig
-from autocana.data.video import VideoConfig
 from autocana.reporters import error_handler, logging_handler, print_logo
-from vscripts import ENCODING_1080P
 
 
 def main() -> int:
@@ -35,9 +32,7 @@ def main() -> int:
     _cmd_new_library(_add_cmd("newlibrary", help=help_msg))
     _cmd_invoice(_add_cmd("invoice", help="Generate a new ARHS invoice."))
     _cmd_tsh(_add_cmd("tsh", help="Generate a new ARHS timesheet."))
-    _cmd_vedit(_add_cmd("vedit", help="Processes videos."))
     _cmd_download(_add_cmd("download", help="Downloads videos."))
-    _cmd_reencode(_add_cmd("reencode", help="Re-encodes videos."))
     args = parser.parse_args()
 
     print_logo()
@@ -54,12 +49,8 @@ def main() -> int:
             return commands.cmd_invoice(InvoiceConfig.load().with_params(args))
         elif args.command == "tsh":
             return commands.cmd_tsh(TSHConfig.load().with_params(args))
-        elif args.command == "vedit":
-            return commands.cmd_vedit(VideoConfig.from_args(args))
         elif args.command == "download":
             return commands.cmd_download(DownloadConfig.from_args(args))
-        elif args.command == "reencode":
-            return commands.cmd_reencode(ReencodeConfig.from_args(args))
         elif args.command == "setup":
             return commands.cmd_setup(SetupConfig.from_args(args))
         else:
@@ -100,37 +91,10 @@ def _cmd_tsh(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     return parser
 
 
-def _cmd_vedit(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    parser.add_argument("file_path", type=str, help="Path to the file to edit.")
-    parser.add_argument("actions", type=str, nargs="*", help="list of actions to be ran")
-    _set_output_args(parser)
-    parser.set_defaults(func=commands.cmd_vedit)
-    return parser
-
-
 def _cmd_download(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("url_or_path", type=str, help="Url to download or path containing a list of URLs.")
     _set_output_args(parser)
     parser.set_defaults(func=commands.cmd_download)
-    return parser
-
-
-def _cmd_reencode(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    parser.add_argument(
-        "dir_or_path",
-        type=str,
-        help="Path to a video file or a directory containing video files to re-encode.",
-    )
-    parser.add_argument("-q", "--quality", type=str, help="Target quality for the reencode", default=ENCODING_1080P)
-    parser.add_argument(
-        "-r",
-        "--recursive",
-        action="store_true",
-        help="If the directory should be recursively explored.",
-        default=False,
-    )
-    _set_output_args(parser)
-    parser.set_defaults(func=commands.cmd_reencode)
     return parser
 
 
